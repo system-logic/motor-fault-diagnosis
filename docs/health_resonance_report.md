@@ -92,7 +92,7 @@ slip in range. A trust gate: if any of these fails, the data is read wrong.
 12 healthy files (6 speed + 6 torque), 26 plateaus. The validation figure below has four
 panels; the findings follow.
 
-![Health baseline validation: f1 vs speed, slip vs speed, broken-bar floor, vibration 1x](figures/health_baseline_validation.png)
+![Health baseline validation: f1 vs speed, slip vs speed, broken-bar floor, vibration 1x](https://github.com/system-logic/motor-fault-diagnosis/blob/main/docs/health_baseline_validation.png)
 
 **4.1. Poles — confirmed by physics.** f1 is strictly proportional to rpm (R² = 0.999).
 The slope is not exactly 1 but 1.014 — that excess is the *slip signature*: since
