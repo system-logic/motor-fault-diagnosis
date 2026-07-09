@@ -1,20 +1,20 @@
 """
-broken_bar_visualize.py — диагностические листы по файлам обрыва стержня.
+broken_bar_visualize.py - diagnostic sheets for broken-rotor-bar files.
 
-На каждый файл — лист из 6 панелей:
-  (1) профиль скорости + окна анализа (зелёные — слип-стабильные, красная рамка —
-      окно макс. нагрузки, по которому заголовочные метрики);
-  (2) спектрограмма тока с границами окна макс. нагрузки;
-  (3) ГРЕБЁНКА: спектр тока на окне макс. нагрузки с предсказанными полосами
-      k=1,2,3 и измеренными пиками, подпись SNR первой полосы;
-  (4) сигнатура (SNR) vs скольжение по всем окнам файла — ось нагрузки;
-  (5) полный спектр тока с шумовым полом;
-  (6) КОНТРОЛЬ: зона дисбаланса f1±fr (должна быть пустой) рядом с полосами
-      обрыва — показываем, что это ротор-стержень, а не дисбаланс.
+One sheet per file, 6 panels:
+  (1) speed profile + analysis windows (green = slip-stable, red box = max-load window,
+      the one the headline metrics come from);
+  (2) current spectrogram with the max-load window borders;
+  (3) COMB: current spectrum on the max-load window with the predicted k=1,2,3 bands
+      and measured peaks; first-band SNR in the title;
+  (4) signature (SNR) vs slip across all windows of the file - the load axis;
+  (5) full current spectrum with the noise floor;
+  (6) CONTROL: the imbalance zone f1+/-fr (should be empty) next to the broken-bar
+      bands - shows this is a rotor bar, not imbalance.
 
-Кладётся в папку Broken_Bar рядом с health_baseline.py и broken_bar_analyze.py.
-  python broken_bar_visualize.py           — все файлы
-  python broken_bar_visualize.py 3000       — только файлы с 3000 в имени
+Place in the Broken_Bar folder next to health_baseline.py and broken_bar_analyze.py.
+  python broken_bar_visualize.py           - all files
+  python broken_bar_visualize.py 3000       - only files whose name contains "3000"
 """
 import os, sys, glob, re
 import numpy as np
@@ -45,7 +45,7 @@ def draw_sheet(path):
     t, rpm = hb.instantaneous_rpm(X[:, ch["keyphase"]])
     A = X[:, ch["current"][0]]; proto = hb.protocol_of(fn)
 
-    # окна анализа: слип-стабильные + выбор макс. нагрузки
+    # analysis windows: slip-stable + pick the max-load one
     wins = []
     for ts, rpm_med, drift in bb.stable_windows(A, ch["current"], t, rpm):
         i0 = int(ts * FS); i1 = int((ts + bb.WIN_SEC) * FS)
@@ -58,34 +58,34 @@ def draw_sheet(path):
     good = [w for w in wins if w["stable"] and w["resolvable"]]
     if not good:
         good = [w for w in wins if w["stable"]] or wins
-    head = max(good, key=lambda w: w["slip"])          # окно макс. нагрузки
+    head = max(good, key=lambda w: w["slip"])          # max-load window
     i0 = int(head["ts"] * FS); i1 = int((head["ts"] + bb.WIN_SEC) * FS)
     Aw = A[i0:i1]; f1 = head["f1"]; s = head["slip"] / 100; off = head["off"]; fr = head["fr"]
 
     fig = plt.figure(figsize=(16, 11)); gs = fig.add_gridspec(3, 2, hspace=0.4, wspace=0.22)
 
-    # (1) профиль + окна
+    # (1) profile + windows
     ax = fig.add_subplot(gs[0, 0]); ax.plot(t, rpm, lw=0.5, color="#333")
     for w in wins:
         if w["stable"]:
             ax.axvspan(w["ts"], w["ts"] + bb.WIN_SEC, color="#2ca02c", alpha=0.10, lw=0)
     ax.axvspan(head["ts"], head["ts"] + bb.WIN_SEC, color="none", ec="#d62728", lw=2)
-    ax.set(title="(1) Скорость + окна анализа (зел.=стаб., крас.=макс.нагрузка)",
-           xlabel="с", ylabel="об/мин")
-    ax.legend(handles=[Patch(fc="#2ca02c", alpha=0.3, label="слип-стабильное окно"),
-                       Patch(fc="none", ec="#d62728", label="окно макс. нагрузки")], fontsize=8)
+    ax.set(title="(1) Speed + analysis windows (green=stable, red=max-load)",
+           xlabel="time, s", ylabel="rpm")
+    ax.legend(handles=[Patch(fc="#2ca02c", alpha=0.3, label="slip-stable window"),
+                       Patch(fc="none", ec="#d62728", label="max-load window")], fontsize=8)
 
-    # (2) спектрограмма
+    # (2) spectrogram
     ax = fig.add_subplot(gs[0, 1])
     nper = 8192; fsg, tsg, Sxx = spectrogram(A - A.mean(), fs=FS, nperseg=nper, noverlap=nper // 2, scaling="spectrum")
     band = fsg <= 70; Sdb = 10 * np.log10(Sxx[band] + 1e-12)
     ax.pcolormesh(tsg, fsg[band], Sdb, shading="auto", cmap="magma",
                   vmin=np.percentile(Sdb, 40), vmax=np.percentile(Sdb, 99.9))
     ax.axvline(head["ts"], color="cyan", lw=1.2); ax.axvline(head["ts"] + bb.WIN_SEC, color="cyan", lw=1.2)
-    ax.set(title="(2) Спектрограмма тока (голубое — окно макс. нагрузки)",
-           xlabel="с", ylabel="Гц", ylim=(0, 70))
+    ax.set(title="(2) Current spectrogram (cyan — max-load window)",
+           xlabel="time, s", ylabel="Hz", ylim=(0, 70))
 
-    # (3) гребёнка на окне макс. нагрузки
+    # (3) comb on the max-load window
     ax = fig.add_subplot(gs[1, 0]); f, spd = spec_db(Aw)
     win = max(4 * off, 3.5); m = (f >= f1 - win) & (f <= f1 + win)
     ax.plot(f[m], spd[m], lw=0.9, color="#333")
@@ -94,45 +94,45 @@ def draw_sheet(path):
         for sgn in (-1, 1):
             ax.axvline(f1 + sgn * 2 * k * s * f1, color=col, ls="--", lw=0.9, alpha=0.8)
         ax.plot([], [], color=col, ls="--", label=f"k={k}")
-    ax.set(title=f"(3) Гребёнка полос k=1,2,3 | SNR₁={head['snr']:.0f} дБ, s={head['slip']:.2f}%",
-           xlabel="Гц", ylabel="дБ отн f1", ylim=(-95, 5)); ax.legend(fontsize=8); ax.grid(alpha=0.3)
+    ax.set(title=f"(3) Sideband comb k=1,2,3 | SNR₁={head['snr']:.0f} dB, s={head['slip']:.2f}%",
+           xlabel="Hz", ylabel="dB rel. f1", ylim=(-95, 5)); ax.legend(fontsize=8); ax.grid(alpha=0.3)
 
-    # (4) сигнатура vs слип (ось нагрузки)
+    # (4) signature vs slip (load axis)
     ax = fig.add_subplot(gs[1, 1])
     ws = [w for w in wins if w["stable"] and w["resolvable"]]
     if ws:
         ax.scatter([w["slip"] for w in ws], [w["snr"] for w in ws], s=30, c="#1f77b4",
                    edgecolor="k", lw=0.3, alpha=0.7)
-    ax.scatter([head["slip"]], [head["snr"]], s=90, c="#d62728", edgecolor="k", zorder=5, label="макс. нагрузка")
-    ax.set(title="(4) Сигнатура (SNR полосы) vs скольжение = ось нагрузки",
-           xlabel="скольжение s, %", ylabel="SNR первой полосы, дБ"); ax.legend(fontsize=8); ax.grid(alpha=0.3)
+    ax.scatter([head["slip"]], [head["snr"]], s=90, c="#d62728", edgecolor="k", zorder=5, label="max load")
+    ax.set(title="(4) Signature (band SNR) vs slip = load axis",
+           xlabel="slip s, %", ylabel="first-band SNR, dB"); ax.legend(fontsize=8); ax.grid(alpha=0.3)
 
-    # (5) полный спектр + шумовой пол
+    # (5) full spectrum + noise floor
     ax = fig.add_subplot(gs[2, 0]); mf = f <= 6 * f1 + 20
     ax.plot(f[mf], spd[mf], lw=0.7, color="#1f77b4")
     for k in range(1, 7):
         if k * f1 <= f[mf].max():
             ax.axvline(k * f1, color="#ff7f0e", ls=":", lw=0.7)
     fl = noise_floor(f, spd, 1.5 * f1, 6 * f1)
-    ax.axhline(fl, color="#d62728", ls="--", lw=1, label=f"шумовой пол ≈ {fl:.0f} дБ")
-    ax.set(title="(5) Полный спектр тока (f1 и гармоники)", xlabel="Гц", ylabel="дБ отн f1",
+    ax.axhline(fl, color="#d62728", ls="--", lw=1, label=f"noise floor ≈ {fl:.0f} dB")
+    ax.set(title="(5) Full current spectrum (f1 and harmonics)", xlabel="Hz", ylabel="dB rel. f1",
            ylim=(-95, 5)); ax.legend(fontsize=8); ax.grid(alpha=0.3)
 
-    # (6) контроль: зона дисбаланса f1±fr пуста, а полосы обрыва есть
+    # (6) control: imbalance zone f1+/-fr is empty, broken-bar bands are present
     ax = fig.add_subplot(gs[2, 1])
     span = max(1.5 * fr, 4 * off); mc = (f >= f1 - span) & (f <= f1 + span)
     ax.plot(f[mc], spd[mc], lw=0.9, color="#333")
     ax.axvline(f1, color="k", lw=1)
     for sgn in (-1, 1):
-        ax.axvline(f1 + sgn * off, color="#d62728", ls="--", lw=1)      # обрыв 2sf1
-        ax.axvline(f1 + sgn * fr, color="#2ca02c", ls=":", lw=1.2)      # дисбаланс fr
-    ax.plot([], [], color="#d62728", ls="--", label="полосы обрыва 2s·f1 (ЕСТЬ)")
-    ax.plot([], [], color="#2ca02c", ls=":", label="зона дисбаланса f1±fr (пусто)")
-    ax.set(title="(6) Контроль: это обрыв (2s·f1), а не дисбаланс (f1±fr)",
-           xlabel="Гц", ylabel="дБ отн f1", ylim=(-95, 5)); ax.legend(fontsize=8); ax.grid(alpha=0.3)
+        ax.axvline(f1 + sgn * off, color="#d62728", ls="--", lw=1)      # broken bar 2sf1
+        ax.axvline(f1 + sgn * fr, color="#2ca02c", ls=":", lw=1.2)      # imbalance fr
+    ax.plot([], [], color="#d62728", ls="--", label="broken-bar bands 2s·f1 (PRESENT)")
+    ax.plot([], [], color="#2ca02c", ls=":", label="imbalance zone f1±fr (EMPTY)")
+    ax.set(title="(6) Control: broken bar (2s·f1), not imbalance (f1±fr)",
+           xlabel="Hz", ylabel="dB rel. f1", ylim=(-95, 5)); ax.legend(fontsize=8); ax.grid(alpha=0.3)
 
-    fig.suptitle(f"{fn}  |  {proto}  |  окно макс. нагрузки: {head['rpm']:.0f} об/мин, "
-                 f"f1={f1:.2f} Гц, s={head['slip']:.2f}%, 2s·f1={off:.2f} Гц, SNR₁={head['snr']:.0f} дБ",
+    fig.suptitle(f"{fn}  |  {proto}  |  max-load window: {head['rpm']:.0f} rpm, "
+                 f"f1={f1:.2f} Hz, s={head['slip']:.2f}%, 2s·f1={off:.2f} Hz, SNR₁={head['snr']:.0f} dB",
                  fontsize=11, fontweight="bold", y=0.995)
     out = os.path.join(SCRIPT_DIR, "bbviz_" + os.path.splitext(fn)[0] + ".png")
     plt.savefig(out, dpi=110, bbox_inches="tight"); plt.close()
@@ -146,12 +146,12 @@ def main():
     if mask:
         files = [f for f in files if mask in os.path.basename(f)]
     if not files:
-        print("Файлы не найдены."); return
-    print(f"Файлов: {len(files)}")
+        print("No files found."); return
+    print(f"Files: {len(files)}")
     for f in files:
         print("...", os.path.basename(f))
         out = draw_sheet(f); print("   ->", os.path.basename(out))
-    print("Готово. Листы bbviz_*.png рядом со скриптом.")
+    print("Done. Sheets bbviz_*.png are next to the script.")
 
 if __name__ == "__main__":
     main()
