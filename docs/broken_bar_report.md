@@ -105,7 +105,7 @@ centres match those predicted from slip (error a fraction of a Hz). Plotting ban
 against slip lines up cleanly — the bands ride exactly as slip dictates. This proves a
 genuine rotor signature, not random peaks.
 
-![Band offset 2s·f1 vs slip — the linear trend is the signature](figures/broken_bar_signature_track.png)
+![Band offset 2s·f1 vs slip — the linear trend is the signature](https://github.com/system-logic/motor-fault-diagnosis/blob/main/docs/broken_bar_signature_track.png)
 
 **5.2. Naive fails, self-sufficient SNR does not.** The naive rise scatters by up to
 ~15 dB between protocols at the same regime — no single threshold fits it. The SNR of the
