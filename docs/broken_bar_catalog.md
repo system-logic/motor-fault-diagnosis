@@ -1,224 +1,232 @@
-# Каталог параметров — обрыв стержня ротора (выпуск 2)
+# Parameter catalog — broken rotor bar (Episode 2)
 
-Опорный документ блока «обрыв стержня». Фиксирует: что меряем, чем, в каком окне,
-какими индикаторами и где честные границы. Построен по образцу
-`health_baseline_catalog.md` и опирается на его результаты.
+Reference document for the broken-bar block. Fixes what we measure, with what, in which
+window, with which indicators, and where the honest boundaries are. Modelled on
+`health_baseline_catalog.md` and built on its results.
 
-Зафиксированные решения этого блока:
-- **Глубокий разбор индикатора:** сначала НАИВНЫЙ (подъём над базой нормы) — чтобы
-  показать межпротокольную проблему вживую, — затем САМОДОСТАТОЧНЫЙ SNR как лекарство.
-- **Гребёнка гармоник k=1,2,3:** полосы f1·(1±2ks). Больше гармоник = надёжнее
-  отстройка от ложных пиков И спасение слабо различимых режимов (высшие полосы
-  дальше от f1).
-- Везде идём вглубь; при выборе «проще/глубже» — глубже.
-
-═══════════════════════════════════════════════════════════════════════
-
-## 0. Что наследуем (не изобретаем заново)
-
-Из health и старой арки переносим как есть:
-- детектор полок, одно-полочное окно, опознание каналов (col0-таймер выброшен,
-  ток = 3 фазы, вибрация = 3 оси, момента нет);
-- **f1 и скольжение считаем ПО-ПОЛОЧНО** (критично для speed-протокола);
-- полюса жёстко 2, n_s = 60·f1;
-- токовый пол боковых полос из health-базы (`sb_floor_bb_dB`) — стартовая база
-  для наивного индикатора;
-- прототипы: `compare_fault` (здоров vs дефект по току, небаланс как контроль),
-  `plateau_spectrum` (одно-полочный спектр, острота пика), `stage_3.sb_snr`
-  (выпуклость полосы над плечами — ядро самодостаточного индикатора).
+Fixed decisions for this block:
+- **Deep indicator analysis:** the NAIVE one first (rise over the healthy baseline) — to
+  show the cross-protocol problem live — then the SELF-SUFFICIENT SNR as the cure.
+- **Harmonic comb k=1,2,3:** bands at f1·(1±2ks). More harmonics = more robust rejection
+  of false peaks AND a chance to rescue poorly-resolvable regimes (higher bands are
+  further from f1).
+- Always go deep; when choosing "simpler vs deeper", go deeper.
 
 ═══════════════════════════════════════════════════════════════════════
 
-## 0-bis. Разведка на 4 файлах (подтверждено на данных)
+## 0. What we inherit (not reinvented)
 
-Проверено на чистом `Broken_Bar`, оба протокола, 20 Н·м на 1000 и 3000 об/мин.
-
-**Подтвердилось:**
-- Опознание каналов и полки — как в health (kp=1, ток=5,6,7, вибр=2,3,4, таймер=0),
-  без правок. Δf=0.056 Гц ≪ отступа — разрешение достаточно.
-- **Сигнатура настоящая и сильная:** полосы садятся ровно на f1(1±2ks) по
-  измеренному слипу (ошибка < 0.04 Гц на 1000, до 0.13 на 3000). Гребёнка k=1,2,3
-  видна. В speed SNR первой полосы 20–24 дБ.
-- Контроль каналов: та же раскладка на дефекте, что на норме.
-
-**НАХОДКА (меняет обработку torque):** при малой нагрузке (20 Н·м) скорость в
-torque гуляет всего ~18 об/мин < порога склейки → детектор объединяет ВСЮ запись
-в одну «полку». Но внутри неё нагрузка свипует полн→0, слип едет 1.6%→−0.2%,
-отступ 2s·f1 едет 0.54→0 Гц → полоса РАЗМАЗЫВАЕТСЯ на ~0.6 Гц и гибнет (SNR 5 дБ).
-Сегмент максимальной нагрузки отдельно → SNR **52 дБ**. Сигнатура была огромной,
-её убивало усреднение по нагрузке.
-
-**Следствия (внесены в разделы 7 и 4):**
-1. В torque НЕЛЬЗЯ брать склеенную полку целиком. Нужно **сегментировать по
-   СКОЛЬЖЕНИЮ** (слип = прокси нагрузки из health): скользящие короткие окна, где
-   слип ≈ const, и анализ окна МАКСИМАЛЬНОЙ нагрузки (макс. слип) — там сигнатура
-   сильнейшая. Побочно получаем ось «сигнатура от нагрузки» бесплатно.
-2. Определение «слабо различимо» РАСЩЕПЛЯЕТСЯ на два:
-   (a) истинная неразрешимость — 2s·f1 мал даже при стабильном слипе (полосы у
-       юбки f1); (b) размазка по нагрузке — лечится сегментацией, НЕ настоящий предел.
-   Истинного предела (a) на этих файлах ещё не видели; проверить на 40/1000.
-3. В speed проблемы нет: там нагрузка const внутри полки, слип стабилен, полосы
-   острые — потому speed-режимы и дали чистые 20+ дБ.
+Carried over from health and the earlier work as-is:
+- plateau detection, single-plateau window, channel identification (col0 timer dropped,
+  current = 3 phases, vibration = 3 axes, no torque);
+- **f1 and slip computed PER PLATEAU** (critical for the speed protocol);
+- poles fixed at 2, n_s = 60·f1;
+- the current sideband floor from the health baseline (`sb_floor_bb_dB`) — the starting
+  reference for the naive indicator;
+- prototypes: `compare_fault` (healthy vs fault in current, unbalance as a control),
+  `plateau_spectrum` (single-plateau spectrum, peak sharpness), `stage_3.sb_snr`
+  (band prominence over shoulders — the core of the self-sufficient indicator).
 
 ═══════════════════════════════════════════════════════════════════════
 
-## 1. Физика сигнатуры (что именно ищем)
+## 0-bis. Recon on 4 files, then confirmed on all 12
 
-Обрыв стержня делает клетку ротора несимметричной → наводит обратно-вращающееся
-поле → в токе статора появляются БОКОВЫЕ ПОЛОСЫ вокруг f1 на частотах:
+Checked on pure `Broken_Bar`, both protocols, 20 Nm at 1000 and 3000 rpm (recon), then
+run on the full 12 files (both loads, both protocols).
+
+**Confirmed:**
+- Channel identification and plateaus — as in health (kp=1, current=5,6,7,
+  vib=2,3,4, timer=0), no changes. df=0.056 Hz ≪ the offset — resolution is sufficient.
+- **The signature is real and strong:** bands land exactly on f1(1±2ks) by the measured
+  slip (error < 0.04 Hz at 1000, up to 0.13 at 3000). The comb k=1,2,3 is visible. In
+  speed the first-band SNR is 20–24 dB.
+- Channel control: the same layout on the fault as on the norm.
+
+**FINDING (changes torque handling):** at light load (20 Nm) the speed in torque wanders
+only ~18 rpm < the merge threshold → the detector merges the WHOLE record into one
+"plateau". But inside it the load sweeps full→0, slip drifts 1.6%→−0.2%, the 2s·f1
+offset drifts 0.54→0 Hz → the band SMEARS over ~0.6 Hz and dies (SNR 5 dB). A max-load
+segment taken separately → SNR **52 dB**. The signature was huge; it was being killed by
+averaging over load.
+
+**Results confirmed on the full run:**
+1. **Torque must be segmented by slip** (slip = the load proxy from health): sliding
+   short windows with slip ≈ const, analysing the MAX-load window (max slip). This gives
+   the "signature vs load" axis for free.
+2. The "poorly-resolvable" notion **splits into two**, both now confirmed:
+   (a) **true unresolvability** — 2s·f1 too small even at stable slip (bands at the f1
+   skirt); (b) **load-mixing smear** — fixed by segmentation, NOT a real limit.
+   The **true limit (a) is confirmed** at `speed 40/1000`: slip is high (4.3%) but f1 is
+   only ~8 Hz, so the offset ~0.7 Hz hugs the f1 skirt and SNR drops to ~2 dB — while an
+   upper plateau of the same file gave 26–30 dB.
+3. **Naive vs SNR proven:** the naive rise scatters by up to ~15 dB between protocols at
+   the same regime, while the self-sufficient SNR stays tight — the self-sufficient
+   indicator solves the cross-protocol problem. (Naive is also unavailable where the
+   health floor was undefined — another point for SNR.)
+4. **Load = strength axis:** 40 Nm → band SNR ~37–44 dB; 20 Nm → ~15–26 dB.
+5. In speed there is no problem: load is const within a plateau, slip is stable, bands
+   are sharp — which is why the speed regimes gave clean 20+ dB.
+
+═══════════════════════════════════════════════════════════════════════
+
+## 1. Signature physics (what exactly we look for)
+
+A broken bar makes the rotor cage asymmetric → induces a backward-rotating field → the
+stator current gets SIDEBANDS around f1 at:
 
     f_sb(k) = f1 · (1 ± 2k·s),   k = 1, 2, 3
 
-- k=1: нижняя LSB = f1(1−2s), верхняя USB = f1(1+2s); отступ 2s·f1.
-- k=2: f1(1±4s); отступ 4s·f1.  k=3: f1(1±6s); отступ 6s·f1.
-- **Нижняя полоса (LSB) — первичный диагностический признак** (прямо связана с
-  роторной несимметрией). Верхняя (USB) слабее и зависит от инерции/пульсаций
-  скорости — меряем обе, но опираемся на LSB.
+- k=1: lower LSB = f1(1−2s), upper USB = f1(1+2s); offset 2s·f1.
+- k=2: f1(1±4s); offset 4s·f1.  k=3: f1(1±6s); offset 6s·f1.
+- **The lower band (LSB) is the primary indicator** (directly tied to rotor asymmetry).
+  The upper (USB) is weaker and depends on inertia / speed ripple — we measure both but
+  rely on LSB.
 
-Ключевые физические свойства, из которых растут проверки:
-- **Полосы СЛЕДУЮТ за скольжением.** Положение строго = f1(1±2ks) по ИЗМЕРЕННОМУ s.
-  Настоящий обрыв сидит точно там, где предсказывает слип; случайный пик — нет.
-  Это подпись дефекта (аналог наклона-подписи-слипа из health).
-- **Зависимость от нагрузки/скорости.** Под нагрузкой s больше → отступ больше →
-  полосы разрешимее и сильнее. У холостого хода s→0 → полосы схлопываются в f1 →
-  неразличимо. Отсюда «слабо различимые» режимы (40/1000: 2s·f1 ≈ 1.1 Гц).
-- **Гребёнка k=1,2,3 как подтверждение.** Наличие всей гребёнки (а не одного пика)
-  — сильное свидетельство именно обрыва. При этом высшие полосы ДАЛЬШЕ от f1
-  (4s·f1, 6s·f1) → на малом скольжении разрешимее первой, хоть и слабее.
+Key properties the checks grow from:
+- **Bands FOLLOW slip.** Position is strictly f1(1±2ks) by the MEASURED s. A real broken
+  bar sits exactly where slip predicts; a random peak does not. This is the signature
+  (analogous to the slip-slope signature in health).
+- **Load/speed dependence.** More load ⇒ larger s ⇒ larger offset ⇒ bands more
+  resolvable and stronger. At no load s→0 ⇒ bands collapse into f1 ⇒ invisible. Hence
+  poorly-resolvable regimes (40/1000: 2s·f1 ≈ 1.1 Hz).
+- **The comb k=1,2,3 confirms.** The full comb (not a single peak) is strong evidence of
+  a broken bar. Note the higher bands are FURTHER from f1 (4s·f1, 6s·f1) → at low slip
+  they resolve better than the first, though they are weaker.
 
 ═══════════════════════════════════════════════════════════════════════
 
-## 2. Группа 1 — Рабочая точка и геометрия полос (на полке)
+## 2. Group 1 — Working point and band geometry (per window)
 
-| метрика | ед. | как | смысл |
+| metric | unit | how | meaning |
 |---|---|---|---|
-| `f1_Hz` | Гц | пик тока 3–80 Гц + параболич. | несущая; по-полочно |
-| `rpm_meas` | об/мин | keyphase | скорость полки |
-| `slip_pct` | % | (60f1−rpm)/(60f1) | драйвер положения полос |
-| `fr_Hz` | Гц | rpm/60 | для контроля (полосы дисбаланса f1±fr) |
-| `off_2s` | Гц | 2s·f1 | отступ полос k=1 |
-| `off_4s`,`off_6s` | Гц | 4s·f1, 6s·f1 | отступы k=2, k=3 |
-| `f_lsb_k`,`f_usb_k` | Гц | f1(1∓2ks), k=1,2,3 | предсказанные центры полос |
+| `f1_Hz` | Hz | current peak 3–80 Hz + parabolic | carrier; per plateau |
+| `rpm` | rpm | keyphase | window speed |
+| `slip_pct` | % | (60f1−rpm)/(60f1) | driver of band position |
+| `fr_Hz` | Hz | rpm/60 | for the control (imbalance bands f1±fr) |
+| `off_2s_Hz` | Hz | 2s·f1 | k=1 band offset |
+| (4s·f1, 6s·f1) | Hz | 4s·f1, 6s·f1 | k=2, k=3 offsets (used internally) |
+| predicted f_lsb/f_usb | Hz | f1(1∓2ks), k=1,2,3 | predicted band centres |
 
 ═══════════════════════════════════════════════════════════════════════
 
-## 3. Группа 2 — Сигнатуры полос (сердце блока)
+## 3. Group 2 — Band signatures (heart of the block)
 
-Для каждой полосы (LSB/USB × k=1,2,3):
+Per band (LSB/USB × k=1,2,3), as built in `broken_bar_analyze.py`:
 
-| метрика | как | смысл |
+| metric | how | meaning |
 |---|---|---|
-| `lsb_k_dB`,`usb_k_dB` | макс. уровень в окне поиска, дБ отн. f1 | уровень полосы |
-| `rise_k_dB` (НАИВНЫЙ) | уровень − пол нормы (health) того же режима/протокола | подъём над базой — ЭТАП A |
-| `snr_k_dB` (SNR) | пик − медиана плеч на том же отступе (stage_3) | выпуклость над локальным полом — ЭТАП B |
-| `pos_err_k_Hz` | \|изм. центр − предсказанный f1(1±2ks)\| | подпись: следует ли за слипом |
-| `width_k_Hz` | ширина пика по −6 дБ | острота (контроль окна/полки) |
+| `lsb{k}_dB`, `usb{k}_dB` | max level in the search window, dB rel. f1 | band level |
+| `naive_rise_dB` (NAIVE) | headline band level − healthy floor of the same regime/protocol | rise over baseline — STAGE A |
+| `lsb{k}_snr`, `usb{k}_snr` (SNR) | peak − median of shoulders at the same offset | prominence over the local floor — STAGE B |
+| `headline_snr` | max(lsb1_snr, usb1_snr) | per-window headline indicator |
+| `comb_coherence` | fraction of k=1,2,3 bands whose position error is in tolerance | signature genuine? |
 
-Окно поиска полосы: `half = max(3·Δf, 0.12·off_2s)` (из старого кода), центр —
-предсказанный f_lsb/usb.
+(Position error per band is computed internally; peak `width` is optional and not stored.)
 
-**Два индикатора — почему оба (повествование):**
-- ЭТАП A, `rise_k_dB` — наивный. Требует пол нормы того же протокола. НАСЛЕДУЕТ
-  межпротокольный разброс health (до 9 дБ) → на нём ПОКАЗЫВАЕМ проблему.
-- ЭТАП B, `snr_k_dB` — самодостаточный. Числитель и знаменатель из одного спектра
-  → общий шум сокращается → калибровка между протоколами НЕ нужна. Лекарство.
-- Проверка успеха B: в одинаковых точках speed vs torque `snr` должен совпадать
-  заметно теснее, чем `rise`.
+Band search window: `half = max(3·df, 0.12·off_2s)`, centred on the predicted f_lsb/f_usb.
+
+**Two indicators — why both (the narrative):**
+- STAGE A, `naive_rise_dB` — naive. Needs the healthy floor of the same protocol.
+  INHERITS the cross-protocol spread from health (up to 9 dB) → we SHOW the problem on it.
+- STAGE B, `lsb/usb{k}_snr` — self-sufficient. Numerator and denominator from one
+  spectrum → common noise cancels → no cross-protocol calibration. The cure.
+- B's success test: at the same points speed vs torque the SNR agrees far more tightly
+  than the naive rise. **Confirmed** (naive ~15 dB spread vs SNR tight).
 
 ═══════════════════════════════════════════════════════════════════════
 
-## 4. Группа 3 — Контроли и отстройка (это ротор, а не что-то ещё)
+## 4. Group 3 — Controls and rejection (this is the rotor, not something else)
 
-| метрика | ожидание при обрыве | зачем |
+| metric | expected for a broken bar | why |
 |---|---|---|
-| `unbalance_pct` | НЕ растёт (≈ health) | обрыв — ротор, не статор; контроль как в compare_fault |
-| `cur_sb_fr_dB` (f1±fr) | НЕ растёт | отстройка от дисбаланса (у него полосы на fr, не на 2sf1) |
-| `comb_coherence` | k=1,2,3 ВСЕ следуют за s | ложный пик так не выстроится |
-| `marginal` (флаг) | off_2s < 0.7 Гц ИЛИ < N·Δf → слабо различимо | честная зона неразличимости |
+| `unbalance_pct` | does NOT rise (≈ health) | broken bar is rotor, not stator; control as in compare_fault |
+| `ctrl_fr_snr` (f1±fr) | does NOT rise | rejects imbalance (whose bands sit at fr, not 2sf1) |
+| `comb_coherence` | k=1,2,3 ALL follow s | a false peak won't line up this way |
+| `resolvable` (flag) | off_2s > 3·df → resolvable, else marked | honest unresolvability zone |
 
 ═══════════════════════════════════════════════════════════════════════
 
-## 5. Группа 4 — Разброс (основа порогов и доказательство лекарства)
+## 5. Group 4 — Spread (basis for thresholds and the proof of the cure)
 
-- `*__std_in`, `*__ptp_in` — по подокнам внутри полки (собственный шум метрики).
-- **`*__spread_cross`** — разброс метрики между протоколами в одинаковой точке.
-  Именно на нём наглядно: у `rise` он большой, у `snr` — малый. Это и есть
-  количественное доказательство, что самодостаточный индикатор решает проблему.
-- Порог наблюдение/тревога строим по `max(std_in, spread_cross)` для выбранного
-  индикатора (в итоге — SNR).
-
-═══════════════════════════════════════════════════════════════════════
-
-## 6. Группа 5 — Санитария + когерентность гребёнки
-
-- Наследуем из health: консистентность каналов, слип в диапазоне, полка найдена.
-- **Разрешение по частоте достаточно?** Δf = 1/T_окна должно быть заметно меньше
-  off_2s (иначе полоса k=1 не отделится от f1). Флаг, если Δf > off_2s/4.
-- **Когерентность гребёнки:** доля полос k=1,2,3, чей `pos_err` в допуске.
-  Высокая → сигнатура настоящая; низкая → случайные пики.
+- Within-window / within-file spread of a metric = its own noise.
+- **Between-protocol spread** at the same operating point is the key one: for the naive
+  rise it is large, for the SNR it is small. That is the quantitative proof that the
+  self-sufficient indicator solves the problem. It is **shown via the naive-vs-SNR
+  figure** rather than stored as a column.
+- A watch/alarm threshold is built from the SNR spread for the chosen indicator (SNR).
 
 ═══════════════════════════════════════════════════════════════════════
 
-## 7. Окна и требование к разрешению по частоте
+## 6. Group 5 — Sanity + comb coherence
 
-- Спектр — **Ханнинг** (нам важны положение и уровень полос, не абсолютная
-  амплитуда → flat-top не нужен, в отличие от 1× дисбаланса).
-- **Длина окна критична:** чтобы отделить полосу от f1, нужно Δf ≪ off_2s.
-  На 40/1000 off_2s≈1.1 Гц → нужно T ≳ 10 с (Δf ≲ 0.1 Гц). MAX_WIN_SEC = 18–20 с
-  даёт Δf ≈ 0.05 Гц — с запасом.
-- **НО (разведка): окно должно иметь СТАБИЛЬНЫЙ слип.** В torque при малой нагрузке
-  склеенная полка мешает нагрузки (слип едет) → отступ полос плывёт → полоса
-  размазана, длинное окно ВРЕДИТ. Правило: сегментировать по слипу, брать окно
-  где слип ≈ const (размах слипа в окне даёт размазку 2·Δs·f1 — держать < Δf).
-  Для характеристики дефекта — окно МАКС. нагрузки (макс. слип). Компромисс
-  длина↔стабильность: короче окно → хуже Δf, но стабильнее слип; выбирать по
-  факту (в разведке 6 с макс.нагрузки уверенно били 18 с склейки).
-- Высшие гармоники (k=2,3) на малом s разрешимее первой → отдельный плюс гребёнки.
+- Inherited from health: channel consistency, slip in range, plateau found.
+- **Is the frequency resolution enough?** df = 1/T_window must be well below off_2s
+  (else the k=1 band won't separate from f1). Flagged via `resolvable` (off_2s > 3·df).
+- **Comb coherence:** the fraction of k=1,2,3 bands whose position error is in tolerance.
+  High → genuine signature; low → random peaks.
 
 ═══════════════════════════════════════════════════════════════════════
 
-## 8. Валидационные выходы блока
+## 7. Windows and the frequency-resolution requirement
 
-1. Здоров vs обрыв: наложенные спектры на фокус-режиме с отметками LSB/USB (k=1..3).
-2. Таблица по полкам: уровни/подъём/SNR полос по обоим протоколам.
-3. `rise` vs `snr` в точках пересечения протоколов → доказательство, что SNR
-   снимает межпротокольный разброс.
-4. Подъём сигнатуры vs скорость и нагрузка; карта разрешимости (где marginal).
-5. Подпись: измеренные центры полос vs предсказанные f1(1±2ks) — ложатся ли на линию.
-6. Контроль: небаланс здоров ≈ обрыв (не вырос).
-7. Композиты: роторные полосы живы, небаланс не вырос (Этап 4 блока).
-
-═══════════════════════════════════════════════════════════════════════
-
-## 9. Честные границы блока (называть в кадре)
-
-- **Только тяжёлый дефект (H), метки severity нет** → оси «глубина/число оборванных
-  стержней» НЕТ; строим ось «сигнатура от скорости/нагрузки».
-- **Оценка числа оборванных стержней** (классические формулы по уровню LSB) — без
-  градаций тяжести НЕ калибруется; максимум качественно, с оговоркой.
-- **Записи деградации во времени нет** → темп развития СМОДЕЛИРУЕМ с дисклеймером
-  (как stage_4); ось наработки условна.
-- **Композиты** `Broken_Bar-Bearing_Inner/Outer` берём ТОЛЬКО по роторной части
-  (ток); подшипник в них — вне блока, уедет в выпуск 5.
-- **Слабо различимые режимы** (малый 2s·f1, напр. 40/1000) помечаем честно —
-  не выдаём шум за сигнал.
+- Spectrum — **Hann** (we care about band position and level, not absolute amplitude →
+  flat-top not needed, unlike imbalance 1×).
+- **Window length matters:** to separate a band from f1 we need df ≪ off_2s. At 40/1000
+  off_2s≈1.1 Hz → T ≳ 10 s (df ≲ 0.1 Hz).
+- **BUT (recon): the window must have STABLE slip.** In torque at light load a merged
+  plateau mixes load (slip drifts) → the offset drifts → the band smears, and a long
+  window HURTS. Rule: segment by slip, take a window where slip ≈ const (the slip range
+  in the window gives a smear 2·Δs·f1 — keep it < df). For characterising the fault, use
+  the MAX-load window (max slip). Length↔stability trade-off: shorter window → worse df
+  but steadier slip; choose empirically (in recon, a 6 s max-load window beat an 18 s
+  merged one decisively). As built: `WIN_SEC = 8 s`, `STEP_SEC = 2 s`.
+- Higher harmonics (k=2,3) resolve better than the first at low s → a further plus of the
+  comb.
 
 ═══════════════════════════════════════════════════════════════════════
 
-## 10. Дифф против старого кода
+## 8. Validation outputs of the block
 
-- `compare_fault`: пути хардкожены и один FOCUS-режим → переводим на авто-резолв
-  папок и ВСЕ режимы обоих протоколов; f1/s по-полочно; добавляем k=2,3.
-- `plateau_spectrum`: даёт острый пик на одной полке → используем его окно/остроту,
-  но разворачиваем в пакет по всем полкам + гребёнка.
-- `stage_3.sb_snr`: ядро самодостаточного индикатора — переносим как ЭТАП B.
-- Ново: наивный индикатор `rise` как контраст; `pos_err`/когерентность гребёнки;
-  межпротокольный `spread_cross` как доказательство; флаг разрешения по частоте.
+1. Healthy vs broken bar: overlaid spectra on a focus regime with LSB/USB (k=1..3) marks.
+2. Per-window table: band levels / rise / SNR for both protocols.
+3. Naive vs SNR at protocol crossing points → proof that SNR removes the cross-protocol
+   spread. **Done.**
+4. Signature vs speed and load; resolvability map (where not resolvable). **Done.**
+5. Signature track: measured band centres vs predicted f1(1±2ks) — do they line up. **Done.**
+6. Control: unbalance healthy ≈ broken bar (did not rise). **Done.**
+7. Composites: rotor bands alive, unbalance did not rise (block Stage 4 — **pending**).
 
 ═══════════════════════════════════════════════════════════════════════
 
-## Датасет блока
-- [Broken_Bar] — speed/H:6, torque/H:6 (чистый класс).
-- [Broken_Bar-Bearing_Inner] — speed/H:6, torque/H:6 (композит, Этап 4).
-- [Broken_Bar-Bearing_Outer] — speed/H:6, torque/H:6 (композит, Этап 4).
-- База нормы health — уже построена (эталон для наивного индикатора).
+## 9. Honest boundaries of the block
+
+- **Only the severe defect (H), no severity label** → no "depth / number of broken bars"
+  axis; we build only the "signature vs speed/load" axis.
+- **Number of broken bars** (classic formulas from LSB level) is NOT calibrated without
+  severity grades — qualitative at most, with a caveat.
+- **No time-degradation recording** → the growth rate is MODELLED with a disclaimer (as
+  in the old stage_4); the run-time axis is nominal.
+- **Composites** `Broken_Bar-Bearing_Inner/Outer` are taken ONLY by the rotor part
+  (current); the bearing part is out of this block and moves to Episode 5.
+- **Poorly-resolvable regimes** (small 2s·f1, e.g. 40/1000) are flagged honestly — we do
+  not pass noise off as signal.
+
+═══════════════════════════════════════════════════════════════════════
+
+## 10. Diff vs the old code (historical)
+
+- `compare_fault`: hard-coded paths and one FOCUS regime → moved to folder auto-resolve
+  and ALL regimes of both protocols; f1/s per plateau; added k=2,3.
+- `plateau_spectrum`: gives a sharp peak on one plateau → we reuse its window/sharpness
+  but expand it into a batch over all plateaus + the comb.
+- `stage_3.sb_snr`: the core of the self-sufficient indicator — carried over as STAGE B.
+- New: the naive `rise` indicator as a contrast; position error / comb coherence; the
+  between-protocol spread as proof; the frequency-resolution flag (`resolvable`).
+
+═══════════════════════════════════════════════════════════════════════
+
+## Block dataset
+- `[Broken_Bar]` — speed/H:6, torque/H:6 (pure class).
+- `[Broken_Bar-Bearing_Inner]` — speed/H:6, torque/H:6 (composite, Stage 4).
+- `[Broken_Bar-Bearing_Outer]` — speed/H:6, torque/H:6 (composite, Stage 4).
+- The health baseline is already built (reference for the naive indicator).
