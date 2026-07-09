@@ -1,167 +1,174 @@
-# Дорожная карта серии — диагностика асинхронного двигателя ZZU-MCC5
+# Series roadmap — ZZU-MCC5 induction-motor diagnostics
 
-Принцип порядка: каждый выпуск ВЫРАСТАЕТ из предыдущего и ЗАКРЫВАЕТ конкретные
-вопросы. Сквозные оси, по которым выстроена логика:
+Ordering principle: each episode **grows out of** the previous one and **closes**
+specific questions. The threads the logic follows:
 
-- **Канал сигнатуры:** ток (ротор-электрика, статор) → вибрация (механика,
-  подшипники). Идём от простого одноканального анализа к многоканальному.
-- **Инструмент:** прямой спектр на полке → огибающая/демодуляция (подшипники) →
-  мультиклассовый потоковый движок.
-- **Открытые хвосты из health**, которые подбираем первыми:
-  (1) межпротокольный пол обрыва → самодостаточный SNR-индикатор;
-  (2) резонанс 50 Гц → исключение 3000 об/мин из закона ω².
+- **Signature channel:** current (rotor-electrical, stator) → vibration (mechanical,
+  bearings). We move from simple single-channel analysis to multi-channel.
+- **Tooling:** direct plateau spectrum → envelope / demodulation (bearings) →
+  multi-class streaming engine.
+- **Open threads left by health**, picked up first:
+  (1) cross-protocol broken-bar floor → self-sufficient SNR indicator;
+  (2) ~50 Hz resonance → exclude 3000 rpm from the ω² law.
 
-Обозначения: [папки] — классы датасета; H/L — доступная ось тяжести.
+Notation: `[folders]` = dataset classes; H/L = available severity axis.
 
-═══════════════════════════════════════════════════════════════════════
-
-## Выпуск 1 — Фундамент: датасет, норма, резонанс  ✅ ГОТОВО
-Исследования: подготовка датасета · база нормы (health) · проверка резонанса.
-- Растёт из: —
-- Закрывает: структура данных, каналы, полки, два протокола, база нормы и
-  пороги, резонанс стенда 50 Гц, ориентация осей вибрации.
-- Оставляет открытым (нарочно): межпротокольный пол обрыва; поведение 3000 об/мин.
-- [Health]
+**Repository mapping.** Episodes map to the numbered section folders
+(`01_health`, `02_broken_bar`, …). The exact folder/file layout of the repo lives in
+`docs/tree.txt`.
 
 ═══════════════════════════════════════════════════════════════════════
 
-## Выпуск 2 — Роторная электрика: обрыв стержня
-Исследования: обрыв стержня (чистый) · самодостаточный индикатор · роторная
-сигнатура в композитах.
-- Растёт из: токового пола боковых полос и вопроса межпротокольной калибровки (В1).
-- Канал/инструмент: ТОК, MCSA, спектр на одно-полочном окне; переход от
-  «пик над базой нормы» к «пик над локальным полом в том же окне» (SNR-индикатор).
-- Что показываем: полосы f1±2s·f1 поднимаются над полом; на слабо различимом
-  режиме (40/1000) — предел разрешимости; в композитах broken_bar+bearing
-  роторная часть видна в токе (подшипник пока откладываем — честная граница).
-- Закрывает: (1) самодостаточный индикатор — калибровка между протоколами больше
-  не нужна; первый взгляд на композит.
-- Ось тяжести: НЕТ (только H) → ось «сигнатура от скорости».
-- [Broken_Bar] · [Broken_Bar-Bearing_Inner] · [Broken_Bar-Bearing_Outer]
+## Episode 1 — Foundation: dataset, health baseline, resonance  ✅ DONE
+Investigations: dataset preparation · health baseline · resonance check.
+- Grows from: —
+- Closes: data structure, channels, plateaus, the two protocols, the baseline and
+  thresholds, the ~50 Hz rig resonance, vibration-axis orientation.
+- Deliberately left open: cross-protocol broken-bar floor; behaviour at 3000 rpm.
+- `[Health]`  →  folder `01_health`
 
 ═══════════════════════════════════════════════════════════════════════
 
-## Выпуск 3 — Механика ротора I: дисбаланс
-Исследования: дисбаланс (чистый) · закон ω² · контроль независимости от нагрузки.
-- Растёт из: осей вибрации (c3 радиальная, c4 осевая) и резонанса (В1).
-- Канал/инструмент: ВИБРАЦИЯ, амплитуда 1× (flat-top окно), нормировка по режиму.
-- Что показываем: 1× дисбаланса растёт как ω²; строим закон по скоростям ≤2500 +
-  промежуточные полки, ТОЧКУ 3000 ИСКЛЮЧАЕМ (резонансно раздута) — но используем
-  как зону максимальной чувствительности. Контроль: в torque (свип нагрузки) 1×
-  почти не меняется → это ротор, а не нагрузка.
-- Закрывает: (2) закон ω² с корректной обработкой резонанса; дисбаланс vs норма.
-- Ось тяжести: НЕТ (нет метки severity) → только ось скорости.
-- [Rotor_Unbalance]
+## Episode 2 — Rotor-electrical: broken bar
+Status: **pure class ✅ DONE** (12 files, both indicators, load axis, both
+resolvability limits) · **composite rotor-part ⏳ pending**.
+Investigations: broken bar (pure) · self-sufficient indicator · rotor signature in
+composites.
+- Grows from: the current sideband floor and the cross-protocol calibration question (E1).
+- Channel/tool: CURRENT, MCSA, single-plateau-window spectrum; the shift from
+  "peak over the baseline" to "peak over the local floor in the same window"
+  (SNR indicator).
+- What we show: the f1±2s·f1 bands rise over the floor; the resolvability limit at a
+  low-speed/high-load regime (speed 40/1000); in broken_bar+bearing composites the
+  rotor part is visible in the current (bearing part deferred — an honest boundary).
+- Closes: (1) the self-sufficient indicator — no cross-protocol calibration needed;
+  first look at a composite.
+- Severity axis: NONE (H only) → only a "signature vs speed/load" axis.
+- `[Broken_Bar]` · `[Broken_Bar-Bearing_Inner]` · `[Broken_Bar-Bearing_Outer]`
+  →  folder `02_broken_bar`
 
 ═══════════════════════════════════════════════════════════════════════
 
-## Выпуск 4 — Механика ротора II: несоосность и изгиб
-Исследования: несоосность · изгиб вала · разделение семейства 1×.
-- Растёт из: дисбаланса как эталона 1× (В3).
-- Канал/инструмент: ВИБРАЦИЯ, 1× + 2× + 3×, осевая ось (c4).
-- Что показываем: несоосность даёт сильную 2× и заметную ОСЕВУЮ вибрацию; изгиб —
-  1× + 2× со своим соотношением. Ключевая мысль выпуска: дисбаланс, несоосность
-  и изгиб ВСЕ дают 1× — различаем по 2×, осевой компоненте и фазе.
-- Закрывает: разделение «дисбаланс / несоосность / изгиб» — первая строчка
-  будущей матрицы разделения.
-- Ось тяжести: несоосность H/L (есть!) → ось тяжести; изгиб — без метки.
-- [Rotor_Misalignment] (H/L) · [Bend]
+## Episode 3 — Rotor mechanics I: imbalance
+Investigations: imbalance (pure) · the ω² law · load-independence control.
+- Grows from: the vibration axes (c3 radial, c4 axial) and the resonance (E1).
+- Channel/tool: VIBRATION, 1× amplitude (flat-top window), per-regime normalisation.
+- What we show: the imbalance 1× grows as ω²; the law is built from speeds ≤2500 plus
+  the intermediate plateaus, the 3000 rpm POINT is EXCLUDED (resonantly inflated) but
+  used as the zone of maximum sensitivity. Control: under torque (load sweep) the 1×
+  barely changes → it is the rotor, not the load.
+- Closes: (2) the ω² law with correct resonance handling; imbalance vs healthy.
+- Severity axis: NONE (no severity label) → speed axis only.
+- `[Rotor_Unbalance]`  →  folder `03_rotor_unbalance`
 
 ═══════════════════════════════════════════════════════════════════════
 
-## Выпуск 5 — Подшипники I: инструмент + дорожки
-Исследования: теория характеристических частот + огибающая · внешняя дорожка ·
-внутренняя дорожка.
-- Растёт из: вибрационного пола (В1); это НОВЫЙ инструментарий.
-- Канал/инструмент: ВИБРАЦИЯ, полосовая фильтрация + огибающая (демодуляция),
-  характеристические частоты BPFO/BPFI/BSF из геометрии подшипника.
-- Что показываем: почему подшипник не виден в прямом спектре и виден в огибающей;
-  внешняя дорожка → BPFO (стабильная линия); внутренняя → BPFI с модуляцией на 1×
-  (боковые полосы вокруг BPFI).
-- Закрывает: инструмент огибающей; сигнатуры BPFO и BPFI.
-- Ось тяжести: обе H/L → показываем рост сигнатуры с тяжестью.
-- [Bearing_Outer] (H/L) · [Bearing_Inner] (H/L)
+## Episode 4 — Rotor mechanics II: misalignment and bend
+Investigations: misalignment · shaft bend · separating the 1× family.
+- Grows from: imbalance as the 1× reference (E3).
+- Channel/tool: VIBRATION, 1× + 2× + 3×, the axial axis (c4).
+- What we show: misalignment gives a strong 2× and a noticeable AXIAL vibration; bend
+  gives 1× + 2× with its own ratio. Key idea: imbalance, misalignment and bend ALL
+  give 1× — we separate them by 2×, the axial component, and phase.
+- Closes: the "imbalance / misalignment / bend" separation — the first row of the
+  future discrimination matrix.
+- Severity axis: misalignment H/L (available!) → a severity axis; bend — no label.
+- `[Rotor_Misalignment]` (H/L) · `[Bend]`  →  folder `04_misalignment_bend`
 
 ═══════════════════════════════════════════════════════════════════════
 
-## Выпуск 6 — Подшипники II: тела качения + композит дорожек
-Исследования: шарик (тело качения) · внутренняя+внешняя одновременно · ось тяжести.
-- Растёт из: инструмента огибающей (В5).
-- Канал/инструмент: ВИБРАЦИЯ, огибающая; BSF и его модуляция сепаратором (FTF).
-- Что показываем: сигнатура шарика (BSF, часто слабее и «плавает»); в композите
-  двух дорожек — две характеристические линии разом, проверяем аддитивность.
-- Закрывает: полное семейство подшипника; аддитивность сигнатур (готовит композиты).
-- Ось тяжести: шарик H/L; композит дорожек — только H.
-- [Bearing_Ball] (H/L) · [Bearing_Inner-Bearing_Outer]
+## Episode 5 — Bearings I: tooling + raceways
+Investigations: characteristic-frequency theory + envelope · outer race · inner race.
+- Grows from: the vibration floor (E1); this is NEW tooling.
+- Channel/tool: VIBRATION, band-pass + envelope (demodulation), characteristic
+  frequencies BPFO/BPFI/BSF from bearing geometry.
+- What we show: why a bearing is invisible in the direct spectrum but visible in the
+  envelope; outer race → BPFO (a stable line); inner race → BPFI modulated at 1×
+  (sidebands around BPFI).
+- Closes: the envelope tool; the BPFO and BPFI signatures.
+- Severity axis: both H/L → we show the signature growing with severity.
+- `[Bearing_Outer]` (H/L) · `[Bearing_Inner]` (H/L)  →  folder `05_bearings_races`
 
 ═══════════════════════════════════════════════════════════════════════
 
-## Выпуск 7 — Статорная электрика: обмотка и питание
-Исследования: межвитковое КЗ обмотки · перекос напряжения · разделение локальное
-vs симметричное.
-- Растёт из: чистого пола небаланса токов и THD (В1).
-- Канал/инструмент: ТОК, симметричные составляющие (обратная последовательность),
-  небаланс фаз; гармоники.
-- Что показываем: межвитковое КЗ поднимает небаланс и специфические гармоники
-  ЛОКАЛЬНО (одна фаза); перекос питания даёт небаланс СИММЕТРИЧНО по питанию.
-  Различаем источник по картине последовательностей.
-- Закрывает: статорная электрика; разделение «обмотка vs напряжение».
-- Особенность: перекос напряжения снят ТОЛЬКО в torque (нет speed-протокола) —
-  назвать в кадре как ограничение.
-- Ось тяжести: обмотка H/L; напряжение — только L.
-- [Winding] (H/L) · [Voltage_Unbalance-Torque_Circulation] (L)
+## Episode 6 — Bearings II: rolling elements + race composite
+Investigations: ball (rolling element) · inner+outer at once · severity axis.
+- Grows from: the envelope tool (E5).
+- Channel/tool: VIBRATION, envelope; BSF and its modulation by the cage (FTF).
+- What we show: the ball signature (BSF, often weaker and "drifting"); in the two-race
+  composite — two characteristic lines at once, checking additivity.
+- Closes: the full bearing family; signature additivity (prepares the composites).
+- Severity axis: ball H/L; race composite — H only.
+- `[Bearing_Ball]` (H/L) · `[Bearing_Inner-Bearing_Outer]`  →  folder `06_bearings_ball`
 
 ═══════════════════════════════════════════════════════════════════════
 
-## Выпуск 8 — Композитные дефекты и разрешение аномалий
-Исследования: композиты с подшипником (суперпозиция) · разрешение путаницы
-inner/outer в speed · матрица разделения дефектов.
-- Растёт из: ВСЕХ одиночных сигнатур (В2–В7) — раньше собрать нельзя.
-- Канал/инструмент: и ток, и вибрация вместе; наложение сигнатур.
-- Что показываем: в композитах роторная/статорная часть (ток) и подшипниковая
-  (огибающая) живут в разных местах и складываются, а не мешают; сводим всё в
-  МАТРИЦУ РАЗДЕЛЕНИЯ (какой дефект — в каком канале, на какой частоте).
-- Разрешаем аномалию: [Rotor_Misalignment-Bearing_Outer]/speed — 12 файлов при
-  пустой inner-папке; распределяем по BPFI/BPFO (инструмент из В5).
-- Закрывает: обработку композитов; аномалию именования; матрицу разделения.
-- [*-Bearing_Inner] · [*-Bearing_Outer] композиты (обрыв, дисбаланс, несоосность,
-  обмотка) · аномалия misalignment-outer/speed
+## Episode 7 — Stator-electrical: winding and supply
+Investigations: inter-turn winding short · voltage unbalance · local vs symmetric.
+- Grows from: the clean current-unbalance and THD floor (E1).
+- Channel/tool: CURRENT, symmetrical components (negative sequence), phase unbalance;
+  harmonics.
+- What we show: an inter-turn short raises the unbalance and specific harmonics
+  LOCALLY (one phase); supply unbalance raises the unbalance SYMMETRICALLY across the
+  supply. We tell the source apart by the sequence picture.
+- Closes: stator-electrical; the "winding vs voltage" separation.
+- Note: voltage unbalance was recorded ONLY under torque (no speed protocol) — state
+  this as a limitation.
+- Severity axis: winding H/L; voltage — L only.
+- `[Winding]` (H/L) · `[Voltage_Unbalance-Torque_Circulation]` (L)  →  folder `07_stator`
 
 ═══════════════════════════════════════════════════════════════════════
 
-## Выпуск 9 — Динамический диагност: движок и раннее предупреждение
-Исследования: мультиклассовый движок · потоковые состояния и тренд-логика ·
-раннее предупреждение.
-- Растёт из: матрицы разделения (В8) и всех индикаторов.
-- Канал/инструмент: скользящее окно; гейты (полка/переход/слабо различимо);
-  липкая тревога; тренд-подтверждение; параллельные индикаторы на все классы.
-- Что показываем: один проход выдаёт статус по каждому типу дефекта; демо
-  деградации норма → наблюдение → тревога с честной пометкой смоделированной оси.
-- Закрывает: конечную цель проекта — динамическую оценку состояния и выдачу
-  диагноза по перечисленным параметрам.
-- [все классы вместе]
+## Episode 8 — Composite faults and anomaly resolution
+Investigations: bearing composites (superposition) · resolving the inner/outer speed
+mix-up · the fault discrimination matrix.
+- Grows from: ALL single signatures (E2–E7) — cannot be assembled earlier.
+- Channel/tool: current and vibration together; signature superposition.
+- What we show: in composites the rotor/stator part (current) and the bearing part
+  (envelope) live in different places and add up rather than interfere; all of it is
+  collapsed into a DISCRIMINATION MATRIX (which fault, in which channel, at which
+  frequency).
+- Anomaly resolved: `[Rotor_Misalignment-Bearing_Outer]/speed` — 12 files while the
+  inner folder is empty; split by BPFI/BPFO (the tool from E5).
+- Closes: composite handling; the naming anomaly; the discrimination matrix.
+- `[*-Bearing_Inner]` · `[*-Bearing_Outer]` composites (broken bar, imbalance,
+  misalignment, winding) · the misalignment-outer/speed anomaly
+  →  folder `08_composites`
 
 ═══════════════════════════════════════════════════════════════════════
 
-## Зависимости (кто без кого не собирается)
+## Episode 9 — Dynamic diagnostician: engine and early warning
+Investigations: multi-class engine · streaming states and trend logic · early warning.
+- Grows from: the discrimination matrix (E8) and all indicators.
+- Channel/tool: sliding window; gates (plateau / transition / poorly-resolvable);
+  sticky alarm; trend confirmation; parallel indicators for all classes.
+- What we show: one pass emits a status per fault type; a degradation demo
+  healthy → watch → alarm, with the modelled axis honestly flagged.
+- Closes: the project's end goal — dynamic condition assessment and a diagnosis over
+  the listed parameters.
+- `[all classes together]`  →  folder `09_engine`
 
-    В1 ─┬─> В2 (обрыв) ───────────────────────────┐
-        ├─> В3 (дисбаланс) ─> В4 (несоосн./изгиб) ─┤
-        ├─> В5 (подшип. I) ─> В6 (подшип. II) ─────┼─> В8 (композиты+матрица) ─> В9 (движок)
-        └─> В7 (статор) ───────────────────────────┘
+═══════════════════════════════════════════════════════════════════════
 
-- В8 требует ВСЕ одиночные (В2–В7): суперпозиция и матрица без них не строятся.
-- Аномалия misalignment inner/outer в В8 требует огибающей из В5.
-- В9 требует матрицу из В8.
+## Dependencies (what cannot be assembled without what)
 
-## Возможная перестановка (если захочешь)
-Блок «статор» (В7) — электрический и независим от механики/подшипников; его можно
-поднять сразу после обрыва (В2), чтобы закрыть всю ТОКОВУЮ электрику подряд
-(ротор → статор → питание), и только потом уходить в вибрацию. Тогда порядок:
-В2 → В7 → В3 → В4 → В5 → В6 → В8 → В9. Минус — разрываешь механический блок
-резонанс→дисбаланс, который сейчас идёт встык из В1. Мой голос за текущий порядок.
+    E1 ─┬─> E2 (broken bar) ─────────────────────────┐
+        ├─> E3 (imbalance) ─> E4 (misalign./bend) ───┤
+        ├─> E5 (bearings I) ─> E6 (bearings II) ──────┼─> E8 (composites+matrix) ─> E9 (engine)
+        └─> E7 (stator) ──────────────────────────────┘
 
-## Заметки по осям тяжести (severity)
-Показывать «рост сигнатуры с тяжестью» можно там, где есть H/L: подшипники (все
-три), несоосность, обмотка. НЕТ метки severity: обрыв стержня, дисбаланс, изгиб,
-композиты — там строим только ось «сигнатура от скорости/нагрузки».
+- E8 needs ALL singles (E2–E7): superposition and the matrix cannot be built without them.
+- The misalignment inner/outer anomaly in E8 needs the envelope tool from E5.
+- E9 needs the matrix from E8.
+
+## Possible reordering (optional)
+The stator block (E7) is electrical and independent of mechanics/bearings; it could be
+moved right after broken bar (E2) to finish all CURRENT-based electrical faults in a
+row (rotor → stator → supply) before switching to vibration. Order would then be
+E2 → E7 → E3 → E4 → E5 → E6 → E8 → E9. Downside: it breaks the resonance→imbalance
+mechanical block that currently follows straight from E1. Current order is preferred.
+
+## Severity-axis notes
+"Signature grows with severity" can be shown where H/L exists: bearings (all three),
+misalignment, winding. NO severity label: broken bar, imbalance, bend, composites —
+there we build only the "signature vs speed/load" axis.
