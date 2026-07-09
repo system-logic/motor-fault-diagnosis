@@ -1,218 +1,219 @@
-# Каталог параметров health-базлайна — ZZU-MCC5
+# Health-baseline parameter catalog — ZZU-MCC5
 
-Опорный документ для сборки разбора **health** режима по обоим протоколам
-(`speed_circulation` + `torque_circulation`). Здесь фиксируется, ЧТО мерим,
-КАК, В КАКОМ ОКНЕ и ЗАЧЕМ (какой будущий дефект калибрует каждая метрика).
-
----
-
-## 0. Область и зафиксированные решения
-
-- **Область этапа:** только health-файлы, оба протокола. База нормы и пороги
-  строятся и валидируются здесь; к дефектам они применяются на следующих этапах.
-- **Единица анализа — ПОЛКА (рабочая точка), а не файл.** Один файл даёт
-  несколько полок. В `torque` полки различаются нагрузкой (f1 ~const), в `speed`
-  — скоростью (f1 ступает). Таблица = метрики над плоскостью (скорость × нагрузка).
-- **Полюса — жёстко 2 полюса (1 пара), n_s = 60·f1.** Без автоперебора 2/4/6/8.
-  Корректность контролируется отдельно (слип в диапазоне). Подтверждено на данных.
-- **Вибрация — в согласованных цифровых единицах из самого health, относительно.**
-  Паспортную чувствительность (мВ/g) не привлекаем; физические мм/с не заявляем.
-  Все выводы по вибрации — в терминах «во сколько раз / на сколько дБ».
-- **Разброс — оба вида, порог от большего** (см. группу 4).
+Reference document for building the **health** analysis over both protocols
+(`speed_circulation` + `torque_circulation`). It fixes WHAT we measure, HOW, IN WHICH
+WINDOW, and WHY (which future fault each metric calibrates).
 
 ---
 
-## 0-bis. Разведка на реальных данных (4 health-файла, оба протокола)
+## 0. Scope and fixed decisions
 
-Проверено на `*40Nm_3000rpm*` и `*20Nm_1000rpm*` обоих протоколов.
+- **Scope:** health files only, both protocols. The baseline and thresholds are built
+  and validated here; they are applied to faults in later sections.
+- **Unit of analysis = the PLATEAU (operating point), not the file.** One file yields
+  several plateaus. In `torque` plateaus differ by load (f1 ~const); in `speed` by
+  speed (f1 steps). The table = metrics over the (speed × load) plane.
+- **Poles fixed at 2 (1 pole pair), n_s = 60·f1.** No 2/4/6/8 auto-search. Correctness
+  is checked separately (slip in range). Confirmed on data.
+- **Vibration in consistent digital units from health itself, relative.** No datasheet
+  sensitivity (mV/g); no physical mm/s claimed. All vibration conclusions are in terms
+  of "how many times / how many dB".
+- **Spread — both kinds, threshold from the larger** (see group 4).
 
-**Структура файла:** 90 с записи, Fs=12800 Гц, 1 152 000 строк, 9 колонок
-(последняя сплошь NaN). После чистки — 8 колонок, из них 7 физических.
+---
 
-**Карта каналов (подтверждена по форме сигнала):**
+## 0-bis. Recon on real data (4 health files, both protocols)
 
-| колонка | канал | признак |
+Checked on `*40Nm_3000rpm*` and `*20Nm_1000rpm*` of both protocols.
+
+**File structure:** 90 s record, Fs = 12800 Hz, 1 152 000 rows, 9 columns (last one
+all-NaN). After cleaning — 8 columns, of which 7 are physical.
+
+**Channel map (confirmed by signal shape):**
+
+| column | channel | tell |
 |---|---|---|
-| col0 | **счётчик времени — ОТБРОСИТЬ** | пила, наклон ровно 1.0/с, сброс каждые 1.28 с (2¹⁴ отсч.) |
-| col1 | keyphase | импульсы на частоте вращения; rpm сходится с номиналом |
-| col2, col3, col4 | вибрация (3 оси) | высокочастотная, малая амплитуда |
-| col5, col6, col7 | ток (3 фазы) | доминанта на f1, фазовые сдвиги 120°/240° |
+| col0 | **time counter — DROP** | sawtooth, slope exactly 1.0/s, reset every 1.28 s (2¹⁴ samples) |
+| col1 | keyphase | pulses at rotation frequency; rpm matches the nominal |
+| col2, col3, col4 | vibration (3 axes) | high-frequency, small amplitude |
+| col5, col6, col7 | current (3 phases) | dominant at f1, phase shifts 120°/240° |
 
-**МОМЕНТА В ДАННЫХ НЕТ.** То, что старый код принял бы за момент (col0,
-fdom<5), — это таймер. Следствия: `load_Nm_meas` не измеряется → координата
-нагрузки = номинал из имени; полки детектируются по СКОРОСТИ, не по моменту;
-в `classify` таймер-канал распознаётся явно (пила, наклон ≈1.0/с) и выбрасывается.
+**THERE IS NO TORQUE CHANNEL.** What an old script would take for torque (col0,
+low dominant freq) is the timer. Consequences: `load_Nm_meas` is not measured → the
+load coordinate = nominal from the file name; plateaus are detected by SPEED, not
+torque; in `classify` the timer channel is detected explicitly (sawtooth, slope
+≈1.0/s) and dropped.
 
-**f1 ступает по полкам в speed_circulation — подтверждено:**
-- speed 40/3000: f1 по полкам 50.11 → 41.83 → 50.11 Гц, слип ~2.9% (≈const);
-- speed 20/1000: f1 по полкам 16.76 → 8.29 → 16.74 Гц, слип ~1.7% (≈const).
+**f1 steps between plateaus in speed_circulation — confirmed:**
+- speed 40/3000: f1 per plateau 50.11 → 41.83 → 50.11 Hz, slip ~2.9% (≈const);
+- speed 20/1000: f1 per plateau 16.76 → 8.29 → 16.74 Hz, slip ~1.7% (≈const).
 
-То есть привод меняет f1, слип держится (нагрузка const), скорость ступает.
-Профиль скорости: высоко → низко → высоко. Промежуточные уровни speed-протокола
-(≈2450, ≈490 об/мин) НЕ попадают в сетку 1000/2000/3000 — это бонусное покрытие
-оси скорости, но точка пересечения с torque-протоколом есть в основном на
-номинальном (верхнем) уровне.
+So the drive changes f1, slip holds (load const), speed steps. Speed profile:
+high → low → high. The intermediate speed-protocol levels (≈2450, ≈490 rpm) do NOT
+fall on the 1000/2000/3000 grid — bonus coverage of the speed axis, though the
+crossing point with the torque protocol is mostly at the nominal (top) level.
 
-**torque_circulation — подтверждено:** f1 фиксирована, скорость стоит на
-номинале с мелкими ступенями (напр. 2900/2950/3000) — это ступени НАГРУЗКИ,
-проявленные через слип.
+**torque_circulation — confirmed:** f1 fixed, speed sits at the nominal with small
+steps (e.g. 2900/2950/3000) — these are LOAD steps shown through slip.
 
-**2 полюса — подтверждено:** n_s=60·f1 даёт слип 1.7–3% (физично).
+**2 poles — confirmed:** n_s = 60·f1 gives slip 1.7–3% (physical).
 
-**Ось вибрации НЕ определена на health:** 1× у всех трёх осей на уровне шума
-(0.0000–0.0009), «ось с наим. 1×» скачет между режимами. Ориентацию осей
-(осевая/радиальные) определять по IMBALANCE-файлу, а не по health.
+**Vibration axes — determined (updated):** on health the 1× is near noise on all
+three axes, so the "lowest 1×" heuristic is unreliable. However, the **speed-dependence**
+of the residual 1× (axis `c3` rises strongly toward 3000 rpm, `c4` stays low) already
+assigns the axes, and this is **confirmed by the resonance check**:
+`c3` = **main radial** (imbalance-sensitive), `c4` = **axial**, `c2` = second radial.
 
 ---
 
-## 1. Единица анализа и плоскость режимов
+## 1. Unit of analysis and the regime plane
 
-Каждая строка итоговой таблицы = **одна полка**. Ключ строки:
+Each output row = **one plateau**. Row key (actual table fields):
 
-| поле | смысл |
+| field | meaning |
 |---|---|
 | `protocol` | speed / torque |
-| `file` | имя файла-источника |
-| `plateau_idx` | номер полки внутри файла |
-| `rpm_bin` | скорость полки (округл. к 1000/2000/3000) |
-| `load_bin` | нагрузка полки (округл. к 20/40 Н·м) |
+| `file` | source file name |
+| `plateau_idx` | plateau index within the file |
+| `rpm_meas` / `rpm_level` | plateau speed (measured / rounded) |
+| `load_nominal_Nm` | plateau load (nominal from the file name) |
 
-Плоскость покрывается двумя протоколами взаимодополняюще:
-`torque` плотно кроет ось **нагрузки** (при 3 скоростях), `speed` — ось
-**скорости** (при 2 нагрузках). Точки, достигнутые ОБОИМИ протоколами
-(та же скорость и нагрузка), — **точки пересечения**: на них health-метрики
-обязаны совпасть. Расхождение = флаг (гистерезис / переходный процесс /
-проблема измерения) и первый содержательный результат разбора.
+The plane is covered by the two protocols complementarily: `torque` densely covers the
+**load** axis (at 3 speeds), `speed` covers the **speed** axis (at 2 loads). Points
+reached by BOTH protocols (same speed and load) are **crossing points**: health metrics
+there must agree. A mismatch = a flag (hysteresis / transient / measurement issue) and
+the first substantive result of the analysis.
 
 ---
 
-## 2. Группа 1 — Рабочая точка (координаты и геометрия)
+## 2. Group 1 — Working point (coordinates and geometry)
 
-| метрика | ед. | канал | как считаем | окно | калибрует / смысл |
+| metric | unit | channel | how | window | calibrates / meaning |
 |---|---|---|---|---|---|
-| `f1_Hz` | Гц | ток A | пик спектра 5–80 Гц + параболич. интерполяция | Ханнинг | координата; частота привода; в `speed` ступает по полкам |
-| `rpm_meas` | об/мин | keyphase | медиана интервалов между фронтами, субдискретное время фронта | — | точная скорость; надёжнее момента |
-| `fr_Hz` | Гц | = rpm/60 | оборотная частота | — | драйвер 1×/2×/3× и токовых полос f1±fr |
-| `load_nominal_Nm` | Н·м | имя файла | номинал 20/40 | — | координата нагрузки (канала момента НЕТ — см. 0-bis) |
-| `slip_pct` | % | f1, rpm | (n_s−rpm)/n_s, n_s=60·f1 | — | рабочая точка; **проверка полюсов** |
-| `sb_offset_Hz` | Гц | = 2·s·f1 | отступ полос обрыва стержня | — | геометрия/разрешимость будущей сигнатуры |
+| `f1_Hz` | Hz | current A | spectral peak 5–80 Hz + parabolic interpolation | Hann | coordinate; drive frequency; steps between plateaus in `speed` |
+| `rpm_meas` | rpm | keyphase | median inter-edge interval, sub-sample edge time | — | accurate speed; more reliable than torque |
+| `fr_Hz` | Hz | = rpm/60 | rotation frequency | — | driver of 1×/2×/3× and current bands f1±fr |
+| `load_nominal_Nm` | Nm | file name | nominal 20/40 | — | load coordinate (NO torque channel — see 0-bis) |
+| `slip_pct` | % | f1, rpm | (n_s−rpm)/n_s, n_s=60·f1 | — | working point; **pole check** |
+| `sb_offset_Hz` | Hz | = 2·s·f1 | broken-bar sideband offset | — | geometry/resolvability of the future signature |
 
-**Санитарные ожидания:** f1 линейна по rpm (≈50 Гц @ 3000); slip > 0 и в
-диапазоне ~0.3–4 %; уход slip в минус или скачок к 4-полюсной трактовке = ошибка.
+**Sanity expectations:** f1 linear in rpm (≈50 Hz @ 3000); slip > 0, in ~0.3–4%;
+slip going negative or jumping to a 4-pole reading = an error.
 
 ---
 
-## 3. Группа 2 — Полы сигнатур (нормальный уровень под будущие дефекты)
+## 3. Group 2 — Signature floors (normal level for future faults)
 
-Сердце базы: для каждого семейства дефектов health задаёт «тихий» уровень,
-который потом станет порогом.
+The heart of the baseline: for each fault family, health sets the "quiet" level that
+later becomes a threshold.
 
-| метрика | ед. | канал | как считаем | окно | под какой дефект |
+| metric | unit | channel | how | window | for which fault |
 |---|---|---|---|---|---|
-| `sb_floor_bb_dB` | дБ отн. f1 | ток A | макс. уровень в f1 ± (guard..2s·f1) | Ханнинг | **обрыв стержня** → порог |
-| `vib_1x_{X,Y,Z}` | отн. | вибр. 3 оси | амплитуда на fr | **flat-top** | **дисбаланс** (гл.), несоосность, изгиб |
-| `vib_2x_{X,Y,Z}` | отн. | вибр. 3 оси | амплитуда на 2·fr | **flat-top** | несоосность, ослабление; контроль дисбаланса |
-| `vib_3x_{X,Y,Z}` | отн. | вибр. 3 оси | амплитуда на 3·fr | **flat-top** | несоосность / ослабление (высшие) |
-| `cur_sb_1x_dB` | дБ отн. f1 | ток A | пол полос f1 ± fr | Ханнинг | **дисбаланс/эксцентриситет по току** — НОВОЕ |
-| `bearing_floor_*` | дБ | вибр. | пол на BPFO/BPFI/BSF | Ханнинг | подшипник — **резерв**, требует геометрии |
+| `sb_floor_bb_dB` | dB rel. f1 | current A | max level in f1 ± (guard..2s·f1) | Hann | **broken bar** → threshold |
+| `vib_1x_{c2,c3,c4}` | rel. | vib 3 axes | amplitude at fr | **flat-top** | **imbalance** (main), misalignment, bend |
+| `vib_2x_{c2,c3,c4}` | rel. | vib 3 axes | amplitude at 2·fr | **flat-top** | misalignment, looseness; imbalance control |
+| `vib_3x_{c2,c3,c4}` | rel. | vib 3 axes | amplitude at 3·fr | **flat-top** | misalignment / looseness (higher orders) |
+| `cur_sb_1x_dB` | dB rel. f1 | current A | floor of bands f1 ± fr | Hann | **imbalance/eccentricity via current** — NEW |
+| `bearing_floor_*` | dB | vib | floor at BPFO/BPFI/BSF | Hann | bearings — **reserved**, needs geometry |
 
-Замечания:
-- `vib_1x` у здорового **не ноль** — остаточный дисбаланс есть всегда. База
-  ловит именно этот уровень, дефект будет отсчитываться от него, а не от нуля.
-- `cur_sb_1x_dB` в старом коде отсутствовал; для дисбаланса-по-току необходим.
-- `bearing_floor_*` — место зарезервировано в схеме, считаем на этапе подшипников
-  (нужна геометрия подшипника для характеристических частот).
+Notes:
+- `vib_1x` is **not zero** on a healthy motor — residual imbalance always exists. The
+  baseline captures that level; a fault is measured from it, not from zero.
+- `cur_sb_1x_dB` was absent in the old code; needed for imbalance-via-current.
+- `bearing_floor_*` — placeholder reserved in the schema, computed in the bearing
+  section (needs bearing geometry for the characteristic frequencies).
 
 ---
 
-## 4. Группа 3 — Небаланс и гармоники тока (обмотка / напряжение)
+## 4. Group 3 — Current unbalance and harmonics (winding / voltage)
 
-| метрика | ед. | канал | как считаем | окно | под какой дефект |
+| metric | unit | channel | how | window | for which fault |
 |---|---|---|---|---|---|
-| `I_rms` | отн. | ток A | СКЗ на полке | — | база амплитуды тока |
-| `thd_pct` | % | ток A | гармоники 2..7 отн. f1 | Ханнинг | база искажений |
-| `unbalance_pct` | % | ток A,B,C | доля слабой последовательности (rotation-agnostic) | Ханнинг | **межвитковое КЗ** + **перекос напряжения** (одна база, различаем позже) |
+| `I_rms` | rel. | current A | RMS on the plateau | — | current-amplitude baseline |
+| `thd_pct` | % | current A | harmonics 2..7 rel. f1 | Hann | distortion baseline |
+| `unbalance_pct` | % | current A,B,C | weak-sequence fraction (rotation-agnostic) | Hann | **inter-turn short** + **voltage unbalance** (one baseline, separated later) |
 
-Примечание: чередование фаз в датасете обратное — небаланс считаем как
-отношение меньшей симм. составляющей к большей, иначе жёсткое Vneg/Vpos «взрывается».
+Note: the phase sequence in the dataset is reversed — unbalance is computed as the
+ratio of the smaller symmetrical component to the larger, otherwise a strict
+Vneg/Vpos "explodes".
 
 ---
 
-## 5. Группа 4 — Разброс (основа порогов)
+## 5. Group 4 — Spread (basis for thresholds)
 
-Для каждой метрики групп 2–3 считаем ДВА разброса:
+For each group 2–3 metric we compute TWO spreads:
 
-| разброс | как | отвечает на вопрос |
+| spread | how | answers |
 |---|---|---|
-| `σ_внутри`, `ptp_внутри` | по неперекрывающимся подокнам внутри полки | шумит ли метрика при неизменных условиях (мгновенная стабильность) |
-| `σ_между`, `ptp_между` | по повторам одной рабочей точки (дубли + точки пересечения протоколов) | воспроизводится ли норма от прогона к прогону (стабильность стенда) |
+| `*__std_in`, `*__ptp_in` | over non-overlapping sub-windows within the plateau | does the metric wobble at fixed conditions (instantaneous stability) |
+| between-protocol | over repeats of one operating point (duplicates + protocol crossing points) | does the norm reproduce run-to-run (rig stability) |
 
-- **Порог тревоги строится от `max(σ_внутри, σ_между)`.** Только внутриполочный
-  даёт оптимистично узкий порог → ложные тревоги на здоровом файле из другой серии.
-- `σ_между` оценивается по 2–3 значениям → **индикатор, не статистика**. Подаём
-  честно: внутриполочный — основной σ для порогов; межпрогонный — отдельный флаг
-  доверия.
-- Разброс в **точках пересечения протоколов** — это буквально измеренная
-  «стоимость» объединения двух протоколов в одну базу. Мал → объединение честно.
+- **The alarm threshold is built from `max(within, between)`.** Within-plateau alone
+  gives an optimistically narrow threshold → false alarms on a healthy file from another
+  series.
+- The between spread is estimated from 2–3 values → **an indicator, not statistics**.
+  Stated honestly: within-plateau is the main spread for thresholds; between-run is a
+  separate confidence flag.
+- The spread at **protocol crossing points** is literally the measured "cost" of
+  merging the two protocols into one baseline. Small → the merge is honest.
 
 ---
 
-## 6. Группа 5 — Санитария / качество данных (гейт доверия, показывается раз)
+## 6. Group 5 — Sanity / data quality (trust gate, shown once)
 
-| метрика | смысл |
+| metric | meaning |
 |---|---|
-| `channel_map_consistent` | одинаково ли опознались каналы во всех файлах |
-| `speed_jitter_pct` | разброс интервалов keyphase (качество датчика оборота) |
-| `f1_linearity_resid` | невязка линейности f1 ∝ rpm |
-| `slip_in_range` | слип в физическом диапазоне (косвенно подтверждает 2 полюса) |
-| `plateau_found`, `n_plateau` | найдена ли стабильная полка и сколько |
+| `channel_map_consistent` | were channels identified the same way in all files |
+| `speed_jitter_pct` | keyphase interval spread (rotation-sensor quality) |
+| `f1_linearity_resid` | residual of the f1 ∝ rpm linearity |
+| `slip_in_range` | slip in the physical range (indirectly confirms 2 poles) |
+| `plateau_found`, `n_plateau` | was a stable plateau found, and how many |
 
 ---
 
-## 7. Выбор окна — почему два
+## 7. Window choice — why two
 
-| задача | окно | причина |
+| task | window | reason |
 |---|---|---|
-| **амплитуда** (`vib_1x/2x/3x`) | flat-top | точная амплитуда независимо от попадания в бин; Ханнинг занижает до ~1.4 дБ |
-| **частота / полы / SNR / дБ отн. f1** | Ханнинг | узкий главный лепесток, хорошее разрешение; амплитуда там не критична |
+| **amplitude** (`vib_1x/2x/3x`) | flat-top | accurate amplitude regardless of bin placement; Hann underestimates by up to ~1.4 dB |
+| **frequency / floors / SNR / dB rel. f1** | Hann | narrow main lobe, good resolution; amplitude not critical there |
 
-Два окна под две задачи — осознанное решение, а не непоследовательность.
-
----
-
-## 8. Валидационные выходы этапа (всё на health)
-
-1. **f1 vs rpm**, оба протокола наложены → подтверждает 2 полюса и работу привода.
-2. **slip vs load** → монотонный рост слипа с нагрузкой.
-3. **полы (`sb_floor_bb`, `cur_sb_1x`, `vib_1x`) vs скорость** с полосами разброса.
-4. **Таблица согласованности в точках пересечения** протоколов (совпадение метрик).
-5. **Санитарная таблица** (группа 5) — один раз, гейт доверия к пайплайну.
+Two windows for two tasks — a deliberate choice, not an inconsistency.
 
 ---
 
-## 9. Открытые вопросы (решить в ходе сборки)
+## 8. Validation outputs of this stage (all on health)
 
-- **Ориентация осей XYZ вибрации** (осевая vs радиальные): на health не
-  определяется (1× на уровне шума, см. 0-bis). Определять по IMBALANCE-файлу —
-  радиальные оси дадут сильный 1×, осевая опознается по остаточному. До тех пор
-  три `vib_1x` держим как три канала без ярлыка оси.
-- **Отбор файлов — регуляркой** по `(\d+)Nm` и `(\d+)rpm` + протокол по подстроке,
-  не по точному `circulation` (защита от будущих опечаток в именах).
-- **Дубли рабочих точек** (вне health, но политика та же): при ≥2 файлах на точку
-  — осознанный выбор или усреднение, не считать точку дважды.
-- **Геометрия подшипника** — для `bearing_floor_*`, резерв.
+1. **f1 vs rpm**, both protocols overlaid → confirms 2 poles and drive operation.
+2. **slip vs load** → slip grows monotonically with load.
+3. **floors (`sb_floor_bb`, `cur_sb_1x`, `vib_1x`) vs speed** with spread bars.
+4. **Agreement table at protocol crossing points** (metric match).
+5. **Sanity table** (group 5) — once, a pipeline-trust gate.
 
 ---
 
-## 10. Что меняется относительно старого `analize_health.py`
+## 9. Open questions (resolved / status)
 
-- Единица анализа: **файл → полка** (несколько полок на файл, оба протокола).
-- **col0 — таймер, не момент:** распознавать пилу-счётчик и выбрасывать; старый
-  `classify` ошибочно взял бы его за момент. Момент как канал ОТСУТСТВУЕТ.
-- Стационарность/полки — **по скорости** (из keyphase), не по моменту.
-- Полюса: **автоперебор 2/4/6/8 → жёстко 2** с проверкой слипа.
-- `vib_2x`/`3x`: считались, но не попадали в таблицу → **возвращаем**.
-- **Добавляем** `cur_sb_1x_dB` (пол токовых полос f1±fr) — под дисбаланс.
-- Амплитудные метрики: **flat-top** окно вместо Ханнинга.
-- Разброс: добавляем **межпрогонный** (σ_между) к внутриполочному.
-- В `speed_circulation`: f1 и слип считаются **по-полочно**, не глобально по файлу.
+- **Vibration XYZ axis orientation** — **RESOLVED** (see 0-bis): `c3` main radial,
+  `c4` axial, `c2` second radial, from residual-1× speed-dependence and confirmed by
+  the resonance check.
+- **File selection — by regex** on `(\d+)Nm` and `(\d+)rpm` + protocol by substring,
+  not by an exact `circulation` match (guards against future name typos). Implemented.
+- **Duplicate operating points** (outside health, same policy): with ≥2 files per
+  point — a deliberate pick or averaging, not counting the point twice.
+- **Bearing geometry** — for `bearing_floor_*`, reserved for the bearing section.
+
+---
+
+## 10. What changed vs the old `analize_health.py` (historical)
+
+- Unit of analysis: **file → plateau** (several plateaus per file, both protocols).
+- **col0 is a timer, not torque:** detect the counter sawtooth and drop it; the old
+  `classify` would have taken it for torque. Torque as a channel is ABSENT.
+- Stationarity/plateaus — **by speed** (from keyphase), not torque.
+- Poles: **2/4/6/8 auto-search → fixed 2** with a slip check.
+- `vib_2x`/`3x`: were computed but not written to the table → **restored**.
+- **Added** `cur_sb_1x_dB` (floor of current bands f1±fr) — for imbalance.
+- Amplitude metrics: **flat-top** window instead of Hann.
+- Spread: added the **between-run** spread on top of within-plateau.
+- In `speed_circulation`: f1 and slip are computed **per plateau**, not globally per file.
