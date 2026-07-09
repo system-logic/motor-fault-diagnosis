@@ -136,13 +136,13 @@ is H1.
 
 > Regenerate these two figures in English with `resonanse_check.py` on the health data.
 
-![Resonance: c3 spectra overlaid by speed — a fixed peak at 50 Hz](figures/resonance_c3_spectra_overlay.png)
+![Resonance: c3 spectra overlaid by speed — a fixed peak at 50 Hz](https://github.com/system-logic/motor-fault-diagnosis/blob/main/01_health/outputs/resonance_c3_spectra_overlay.png)
 
 **Test 1 — the fixed peak stands still.** On every plateau below 3000 (1× at 8–41 Hz),
 a peak sits at **50.0 ± 0.7 Hz** and does not move, though speed changes six-fold. That
 is the definition of a resonance.
 
-![Resonance: 1x vs speed (log-log) and the 1x/fr² compliance curve](figures/resonance_transmissibility.png)
+![Resonance: 1x vs speed (log-log) and the 1x/fr² compliance curve](https://github.com/system-logic/motor-fault-diagnosis/blob/main/01_health/outputs/resonance_transmissibility.png)
 
 **Test 2 — 1× inflates into 50 Hz.** Below resonance the 1× barely grows (slope ~0.9);
 at 2917–2970 rpm, where 1× reaches 49–50 Hz, it jumps **×9–14** over the power-law
