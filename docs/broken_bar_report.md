@@ -112,7 +112,7 @@ genuine rotor signature, not random peaks.
 same points stays tight. Diagnosis is built on **SNR**. (The naive indicator is also
 *unavailable* where the healthy floor was undefined — an extra argument for SNR.)
 
-![Signature vs slip (load axis), and naive rise vs self-sufficient SNR](figures/broken_bar_signature.png)
+![Signature vs slip (load axis), and naive rise vs self-sufficient SNR](https://github.com/system-logic/motor-fault-diagnosis/blob/main/docs/broken_bar_signature.png)
 
 **5.3. Load is the strength axis.** Under heavy load (40 Nm) the band SNR is ~37–44 dB;
 under light load (20 Nm) ~15–26 dB (medians 37 vs 19 dB). Broken bars are caught most
