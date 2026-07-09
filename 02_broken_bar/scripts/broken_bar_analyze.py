@@ -1,25 +1,25 @@
 """
-broken_bar_analyze.py — чистовой разбор обрыва стержня ротора (выпуск 2, этап 2).
+broken_bar_analyze.py - clean broken-rotor-bar analysis (section 2, stage 2).
 
-По каталогу broken_bar_catalog.md. Обрабатывает ВСЕ файлы обрыва (обе подпапки),
-здоров-эталон берётся из health-таблицы.
+Follows broken_bar_catalog.md. Processes ALL broken-bar files (both subfolders); the
+healthy reference is taken from the health baseline table.
 
-Ключевое отличие от health-логики (находка разведки):
-  - speed: полка = рабочая точка (слип стабилен внутри полки);
-  - torque: полку НЕЛЬЗЯ брать целиком (нагрузка свипует → слип едет → полоса
-    размазывается). Сегментируем по СЛИПУ: скользящие окна, где слип ≈ const;
-    каждое стабильное окно — точка на оси нагрузки. Заголовочная точка файла —
-    окно МАКС. нагрузки (макс. слип).
+Key difference from the health logic (recon finding):
+  - speed: a plateau = an operating point (slip is stable within the plateau);
+  - torque: the plateau must NOT be taken whole (load sweeps -> slip drifts -> the band
+    smears). We segment by SLIP: sliding windows where slip ~ const; each stable window
+    is a point on the load axis. The per-file headline point is the MAX-load window
+    (max slip).
 
-Индикаторы (оба, как решили — глубокий разбор):
-  - rise (наивный): уровень полосы − пол нормы того же режима/протокола (health);
-  - snr (самодостаточный): выпуклость полосы над плечами в том же спектре.
+Indicators (both, as decided - deep analysis):
+  - rise (naive): band level - healthy floor of the same regime/protocol (health);
+  - snr (self-sufficient): band prominence over its shoulders in the same spectrum.
 
-Гребёнка k=1,2,3: полосы f1·(1±2ks).
+Comb k=1,2,3: bands at f1*(1 +/- 2ks).
 
-Запуск: положить рядом с health_baseline.py в папку Broken_Bar. Health-таблицу
-указать в HEALTH_CSV (или скрипт поищет её сам в родительских папках).
-  python broken_bar_analyze.py            — все файлы из папки скрипта
+Run: place next to health_baseline.py in the Broken_Bar folder. Point HEALTH_CSV at
+the health table (or let the script search parent folders for it).
+  python broken_bar_analyze.py            - all files in the script folder
 """
 import os, sys, glob, re
 import numpy as np
@@ -33,23 +33,23 @@ sys.path.insert(0, SCRIPT_DIR)
 import health_baseline as hb
 FS = hb.FS
 
-# ---- параметры сегментации/анализа ----
-WIN_SEC = 8.0            # окно анализа (Δf = 1/8 = 0.125 Гц)
+# ---- segmentation / analysis parameters ----
+WIN_SEC = 8.0            # analysis window (df = 1/8 = 0.125 Hz)
 STEP_SEC = 2.0
-KMAX = 3                 # гармоники гребёнки k=1..KMAX
-STAB_FACTOR = 0.25       # окно стабильно, если размазка < STAB_FACTOR·off_2s (и < Δf)
-RESOLVE_BINS = 3         # полоса разрешима, если off_2s > RESOLVE_BINS·Δf
+KMAX = 3                 # comb harmonics k=1..KMAX
+STAB_FACTOR = 0.25       # window is stable if smear < STAB_FACTOR*off_2s (and < df)
+RESOLVE_BINS = 3         # band is resolvable if off_2s > RESOLVE_BINS*df
 
-# health-таблица (для наивного индикатора). Если пусто — поищем сами.
+# health table (for the naive indicator). If empty - search for it.
 HEALTH_CSV = ""
 
 def find_health_csv():
     if HEALTH_CSV and os.path.exists(HEALTH_CSV):
         return HEALTH_CSV
     name = "health_baseline_plateaus.csv"
-    # рекурсивно — только внутри папки скрипта (класс небольшой)
+    # recursive - only inside the script folder (a class folder is small)
     hits = glob.glob(os.path.join(SCRIPT_DIR, "**", name), recursive=True)
-    # соседние папки на 2 уровня вверх — БЕЗ рекурсии (напр. ../Health/, ../../Health/)
+    # sibling folders up to 2 levels up - NON-recursive (e.g. ../Health/, ../../Health/)
     d = SCRIPT_DIR
     for _ in range(3):
         d = os.path.dirname(d)
@@ -57,7 +57,7 @@ def find_health_csv():
         hits += glob.glob(os.path.join(d, "*", name))
     return hits[0] if hits else None
 
-# ---- спектр/полосы ----
+# ---- spectrum / bands ----
 def spec_db(sig):
     x = (sig - sig.mean()) * np.hanning(len(sig))
     sp = np.abs(np.fft.rfft(x)); sp[0] = 0
@@ -91,7 +91,7 @@ def band_snr(f, spd, fc, half):
     return pk - (np.median(spd[sh]) if sh.any() else pk)
 
 def sideband_metrics(sig, rpm_w):
-    """Полный набор по полосам k=1..KMAX для окна sig на скорости rpm_w."""
+    """Full set of k=1..KMAX band metrics for window sig at speed rpm_w."""
     f, spd = spec_db(sig); df = f[1] - f[0]
     f1 = f1_of(sig); n_s = 60 * f1; s = (n_s - rpm_w) / n_s
     off2 = 2 * s * f1; fr = rpm_w / 60.0
@@ -112,10 +112,10 @@ def sideband_metrics(sig, rpm_w):
             if not np.isnan(perr) and perr < max(2 * df, 0.15 * ofk):
                 coh_ok += 1
     out["comb_coherence"] = coh_ok / coh_tot if coh_tot else np.nan
-    # заголовочный индикатор — макс из LSB1/USB1
+    # headline indicator - max of LSB1/USB1
     out["lsb1_usb1_snr"] = np.nanmax([out["lsb1_snr"], out["usb1_snr"]])
     out["lsb1_usb1_dB"] = np.nanmax([out["lsb1_dB"], out["usb1_dB"]])
-    # контроль дисбаланса: полоса f1±fr (не должна расти при обрыве)
+    # imbalance control: band f1 +/- fr (must not rise for a broken bar)
     half_fr = max(3 * df, 0.15 * fr)
     out["cur_sb_fr_snr"] = np.nanmax([band_snr(f, spd, f1 - fr, half_fr),
                                       band_snr(f, spd, f1 + fr, half_fr)])
@@ -129,10 +129,10 @@ def unbalance_pct(A, B, C, f1):
     big, small = max(Vp, Vn), min(Vp, Vn)
     return small / (big + 1e-12) * 100.0
 
-# ---- сегментация по слипу ----
+# ---- slip segmentation ----
 def stable_windows(A, cur, t, rpm):
-    """Список окон: (старт, rpm_med, rpm_drift). drift = |медиана последней трети −
-       медиана первой трети| — реальный дрейф нагрузки, БЕЗ джиттера метки оборота."""
+    """List of windows: (start, rpm_med, rpm_drift). drift = |median of last third -
+       median of first third| - the real load drift, WITHOUT keyphase jitter."""
     out = []; ts = 0.0; end = len(A) / FS
     while ts + WIN_SEC <= end:
         m = (t >= ts) & (t < ts + WIN_SEC)
@@ -160,16 +160,15 @@ def process_file(path, health_floor):
         seg = A[i0:i1]
         met = sideband_metrics(seg, rpm_med)
         df = met["df"]; off2 = met["off_2s"]
-        smear = rpm_drift / 30.0                    # Гц размазки от ДРЕЙФА слипа
+        smear = rpm_drift / 30.0                    # Hz of smear from slip DRIFT
         stable = smear < max(df, STAB_FACTOR * off2)
         if not stable or off2 <= 0:
-            continue                               # окно мешает нагрузки / переход — пропуск
-        # наивный индикатор: подъём над полом нормы того же режима/протокола
+            continue                               # window mixes load / transition - skip
+        # naive indicator: rise over the healthy floor of the same regime/protocol
         key = (proto, int(round(rpm_med / 500) * 500))
         floor = health_floor.get(key, np.nan)
         rise = met["lsb1_usb1_dB"] - floor if not np.isnan(floor) else np.nan
-        unb = unbalance_pct(B[i0:i1], A[i0:i1], C[i0:i1], met["f1"]) if False else \
-              unbalance_pct(A[i0:i1], B[i0:i1], C[i0:i1], met["f1"])
+        unb = unbalance_pct(A[i0:i1], B[i0:i1], C[i0:i1], met["f1"])
         row = dict(file=fn, protocol=proto, load_nominal_Nm=load_nom, rpm_nominal=rpm_nom,
                    win_start_s=round(ts, 1), rpm=round(rpm_med, 1), rpm_drift=round(rpm_drift, 1),
                    f1_Hz=round(met["f1"], 3), slip_pct=round(met["slip"], 3),
@@ -189,7 +188,7 @@ def process_file(path, health_floor):
     return rows, ch
 
 def load_health_floor(csv):
-    """{(protocol, rpm_level): sb_floor_bb_dB} из health-таблицы."""
+    """{(protocol, rpm_level): sb_floor_bb_dB} from the health table."""
     if not csv or not os.path.exists(csv):
         return {}
     h = pd.read_csv(csv)
@@ -205,10 +204,11 @@ def main():
              and re.search(r"\d+rpm", os.path.basename(f))
              and "baseline" not in os.path.basename(f)]
     if not files:
-        print("Файлы обрыва не найдены рядом со скриптом."); return
+        print("No broken-bar files found next to the script."); return
     hcsv = find_health_csv()
     health_floor = load_health_floor(hcsv)
-    print(f"Файлов: {len(files)} | health-пол: {'найден '+os.path.basename(hcsv) if hcsv else 'НЕ найден (наивный индикатор пропущен)'}")
+    print(f"Files: {len(files)} | health floor: "
+          f"{'found ' + os.path.basename(hcsv) if hcsv else 'NOT found (naive indicator skipped)'}")
 
     all_rows = []
     for f in files:
@@ -219,7 +219,7 @@ def main():
     out = os.path.join(SCRIPT_DIR, "broken_bar_windows.csv")
     tab.to_csv(out, index=False)
 
-    # заголовочная точка каждого файла = окно макс. нагрузки (макс. слип) среди разрешимых
+    # per-file headline = the max-load (max-slip) window among resolvable ones
     head = []
     for fn, g in tab.groupby("file"):
         gr = g[g.resolvable]
@@ -231,41 +231,41 @@ def main():
     pd.set_option("display.width", 260, "display.max_columns", 60)
     show = ["file", "protocol", "load_nominal_Nm", "rpm", "slip_pct", "off_2s_Hz",
             "resolvable", "headline_snr", "naive_rise_dB", "comb_coherence", "unbalance_pct", "ctrl_fr_snr"]
-    print("\n=== Заголовочные точки (окно макс. нагрузки на файл) ===")
+    print("\n=== Headline points (max-load window per file) ===")
     print(headtab[show].to_string(index=False))
 
     make_figs(tab, headtab)
-    print("\nСохранено:", out, "| broken_bar_headline.csv | фигуры broken_bar_*.png")
+    print("\nSaved:", out, "| broken_bar_headline.csv | figures broken_bar_*.png")
 
 def make_figs(tab, headtab):
     C = {"speed": "#1f77b4", "torque": "#ff7f0e"}
-    # (1) сигнатура (headline SNR) vs слип — ось нагрузки, оба протокола
+    # (1) signature (headline SNR) vs slip - the load axis, both protocols
     fig, ax = plt.subplots(1, 2, figsize=(14, 5.2))
     for p, g in tab[tab.resolvable].groupby("protocol"):
         ax[0].scatter(g.slip_pct, g.headline_snr, c=C.get(p, "gray"), s=28, alpha=0.6,
                       edgecolor="k", lw=0.3, label=p)
-    ax[0].set(title="(1) Сигнатура обрыва (SNR полосы) vs скольжение = ось нагрузки",
-              xlabel="скольжение s, %", ylabel="SNR первой полосы, дБ")
+    ax[0].set(title="(1) Broken-bar signature (band SNR) vs slip = load axis",
+              xlabel="slip s, %", ylabel="first-band SNR, dB")
     ax[0].legend(fontsize=8); ax[0].grid(alpha=0.3)
-    # (2) наивный rise vs самодостаточный snr (если есть health-пол)
+    # (2) naive rise vs self-sufficient snr (if the health floor is available)
     if tab["naive_rise_dB"].notna().any():
         for p, g in headtab.groupby("protocol"):
             ax[1].scatter(g.naive_rise_dB, g.headline_snr, c=C.get(p, "gray"), s=70,
                           edgecolor="k", lw=0.4, label=p)
-        ax[1].set(title="(2) Наивный подъём над базой vs самодостаточный SNR\n"
-                        "(разброс наивного между протоколами — проблема из health)",
-                  xlabel="наивный rise над health-полом, дБ", ylabel="самодостаточный SNR, дБ")
+        ax[1].set(title="(2) Naive rise over baseline vs self-sufficient SNR\n"
+                        "(naive scatter between protocols - the problem from health)",
+                  xlabel="naive rise over health floor, dB", ylabel="self-sufficient SNR, dB")
         ax[1].legend(fontsize=8); ax[1].grid(alpha=0.3)
     else:
-        ax[1].text(0.5, 0.5, "health-пол не найден\nнаивный индикатор пропущен",
+        ax[1].text(0.5, 0.5, "health floor not found\nnaive indicator skipped",
                    ha="center", va="center", transform=ax[1].transAxes)
     plt.tight_layout(); plt.savefig(os.path.join(SCRIPT_DIR, "broken_bar_signature.png"), dpi=120); plt.close()
 
-    # (3) подпись: измеренные центры полос vs предсказанные (гребёнка следует за слипом)
+    # (3) signature track: measured band offset vs slip (comb follows slip)
     fig, ax = plt.subplots(figsize=(7.5, 5))
     ax.scatter(tab.slip_pct, tab.off_2s_Hz, c=[C.get(p, "gray") for p in tab.protocol], s=22, alpha=0.6)
-    ax.set(title="(3) Отступ полос 2s·f1 vs скольжение — линейность = подпись обрыва",
-           xlabel="скольжение s, %", ylabel="измеренный отступ 2s·f1, Гц")
+    ax.set(title="(3) Band offset 2s·f1 vs slip - linearity = broken-bar signature",
+           xlabel="slip s, %", ylabel="measured offset 2s·f1, Hz")
     ax.grid(alpha=0.3)
     plt.tight_layout(); plt.savefig(os.path.join(SCRIPT_DIR, "broken_bar_signature_track.png"), dpi=120); plt.close()
 
