@@ -30,7 +30,7 @@ test rig near 50 Hz**, a finding that shapes how vibration is interpreted later.
 │   ├── health_visualize.py   ← per-file 6-panel diagnostic sheets
 │   └── resonanse_check.py    ← rig resonance hypothesis test
 ├── outputs/                  ← generated CSV/PNG go here (see "How to run")
-└── data/                     ← health CSVs (or a link — see "Data")
+└── data/                     ← health CSVs (not in the repo — see repository root README)
 ```
 
 > **Dependency note.** `health_baseline.py` is not only a runnable script — it is the
