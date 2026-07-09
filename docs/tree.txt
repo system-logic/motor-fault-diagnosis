@@ -1,0 +1,341 @@
+ZZU-MCC5 motor fault diagnosis datasets
+├── Bearing_Ball
+│   ├── speed_circulation
+│   │   ├── bearing_ball_H_speed_circulation_20Nm_1000rpm_250707164215.csv
+│   │   ├── bearing_ball_H_speed_circulation_20Nm_2000rpm_250707164614.csv
+│   │   ├── bearing_ball_H_speed_circulation_20Nm_3000rpm_250707165017.csv
+│   │   ├── bearing_ball_H_speed_circulation_40Nm_1000rpm_250707164408.csv
+│   │   ├── bearing_ball_H_speed_circulation_40Nm_2000rpm_250707164816.csv
+│   │   ├── bearing_ball_H_speed_circulation_40Nm_3000rpm_250707165215.csv
+│   │   ├── bearing_ball_L_speed_circulation_20Nm_1000rpm_250707191959.csv
+│   │   ├── bearing_ball_L_speed_circulation_20Nm_2000rpm_250707191453.csv
+│   │   ├── bearing_ball_L_speed_circulation_20Nm_3000rpm_250707192429.csv
+│   │   ├── bearing_ball_L_speed_circulation_40Nm_1000rpm_250707190340.csv
+│   │   ├── bearing_ball_L_speed_circulation_40Nm_2000rpm_250707191757.csv
+│   │   └── bearing_ball_L_speed_circulation_40Nm_3000rpm_250707192619.csv
+│   └── torque_circulation
+│       ├── bearing_ball_H_torque_circulation_20Nm_1000rpm_250707162701.csv
+│       ├── bearing_ball_H_torque_circulation_20Nm_2000rpm_250707162915.csv
+│       ├── bearing_ball_H_torque_circulation_20Nm_3000rpm_250707163342.csv
+│       ├── bearing_ball_H_torque_circulation_40Nm_1000rpm_250707163540.csv
+│       ├── bearing_ball_H_torque_circulation_40Nm_2000rpm_250707163744.csv
+│       ├── bearing_ball_H_torque_circulation_40Nm_3000rpm_250707164008.csv
+│       ├── bearing_ball_L_torque_circulation_20Nm_1000rpm_250707190133.csv
+│       ├── bearing_ball_L_torque_circulation_20Nm_2000rpm_250707190340.csv
+│       ├── bearing_ball_L_torque_circulation_20Nm_3000rpm_250707190605.csv
+│       ├── bearing_ball_L_torque_circulation_40Nm_1000rpm_250707190834.csv
+│       ├── bearing_ball_L_torque_circulation_40Nm_2000rpm_250707191042.csv
+│       └── bearing_ball_L_torque_circulation_40Nm_3000rpm_250707191244.csv
+├── Bearing_Inner
+│   ├── speed_circulation
+│   │   ├── bearing_inner_H_speed_circulation_20Nm_1000rpm_250706194638.csv
+│   │   ├── bearing_inner_H_speed_circulation_20Nm_2000rpm_250706195059.csv
+│   │   ├── bearing_inner_H_speed_circulation_20Nm_3000rpm_250706195503.csv
+│   │   ├── bearing_inner_H_speed_circulation_40Nm_1000rpm_250706194853.csv
+│   │   ├── bearing_inner_H_speed_circulation_40Nm_2000rpm_250706195256.csv
+│   │   ├── bearing_inner_H_speed_circulation_40Nm_3000rpm_250706195701.csv
+│   │   ├── bearing_inner_L_speed_circulation_20Nm_1000rpm_250707100528.csv
+│   │   ├── bearing_inner_L_speed_circulation_20Nm_2000rpm_250707100948.csv
+│   │   ├── bearing_inner_L_speed_circulation_20Nm_3000rpm_250707101400.csv
+│   │   ├── bearing_inner_L_speed_circulation_40Nm_1000rpm_250707100729.csv
+│   │   ├── bearing_inner_L_speed_circulation_40Nm_2000rpm_250707101153.csv
+│   │   └── bearing_inner_L_speed_circulation_40Nm_3000rpm_250707101556.csv
+│   └── torque_circulation
+│       ├── bearing_inner_H_torque_circulation_20Nm_1000rpm_250706193756.csv
+│       ├── bearing_inner_H_torque_circulation_20Nm_2000rpm_250706193559.csv
+│       ├── bearing_inner_H_torque_circulation_20Nm_3000rpm_250706193404.csv
+│       ├── bearing_inner_H_torque_circulation_40Nm_1000rpm_250706193952.csv
+│       ├── bearing_inner_H_torque_circulation_40Nm_2000rpm_250706194219.csv
+│       ├── bearing_inner_H_torque_circulation_40Nm_3000rpm_250706194425.csv
+│       ├── bearing_inner_L_torque_circulation_20Nm_1000rpm_250707094745.csv
+│       ├── bearing_inner_L_torque_circulation_20Nm_2000rpm_250707095025.csv
+│       ├── bearing_inner_L_torque_circulation_20Nm_3000rpm_250707095317.csv
+│       ├── bearing_inner_L_torque_circulation_40Nm_1000rpm_250707095627.csv
+│       ├── bearing_inner_L_torque_circulation_40Nm_1000rpm_250707095849.csv
+│       ├── bearing_inner_L_torque_circulation_40Nm_2000rpm_250707100044.csv
+│       └── bearing_inner_L_torque_circulation_40Nm_3000rpm_250707100254.csv
+├── Bearing_Inner-Bearing_Outer
+│   ├── speed_circulation
+│   │   ├── bearing_inner_H_and_bearing_outer_H_speed_circulation_20Nm_1000rpm_250706203420.csv
+│   │   ├── bearing_inner_H_and_bearing_outer_H_speed_circulation_20Nm_2000rpm_250706203830.csv
+│   │   ├── bearing_inner_H_and_bearing_outer_H_speed_circulation_20Nm_3000rpm_250706204250.csv
+│   │   ├── bearing_inner_H_and_bearing_outer_H_speed_circulation_40Nm_1000rpm_250706203630.csv
+│   │   ├── bearing_inner_H_and_bearing_outer_H_speed_circulation_40Nm_2000rpm_250706204050.csv
+│   │   └── bearing_inner_H_and_bearing_outer_H_speed_circulation_40Nm_3000rpm_250706204444.csv
+│   └── torque_circulation
+│       ├── bearing_inner_H_and_bearing_outer_H_torque_circulation_20Nm_1000rpm_250706202104.csv
+│       ├── bearing_inner_H_and_bearing_outer_H_torque_circulation_20Nm_2000rpm_250706202301.csv
+│       ├── bearing_inner_H_and_bearing_outer_H_torque_circulation_20Nm_3000rpm_250706202508.csv
+│       ├── bearing_inner_H_and_bearing_outer_H_torque_circulation_40Nm_1000rpm_250706202702.csv
+│       ├── bearing_inner_H_and_bearing_outer_H_torque_circulation_40Nm_2000rpm_250706202954.csv
+│       └── bearing_inner_H_and_bearing_outer_H_torque_circulation_40Nm_3000rpm_250706203204.csv
+├── Bearing_Outer
+│   ├── speed_circulation
+│   │   ├── bearing_outer_H_speed_circulation_20Nm_1000rpm_250707092313.csv
+│   │   ├── bearing_outer_H_speed_circulation_20Nm_2000rpm_250707092732.csv
+│   │   ├── bearing_outer_H_speed_circulation_20Nm_3000rpm_250707093140.csv
+│   │   ├── bearing_outer_H_speed_circulation_40Nm_1000rpm_250707092514.csv
+│   │   ├── bearing_outer_H_speed_circulation_40Nm_2000rpm_250707092947.csv
+│   │   ├── bearing_outer_H_speed_circulation_40Nm_3000rpm_250707093347.csv
+│   │   ├── bearing_outer_L_speed_circulation_20Nm_1000rpm_250707201038.csv
+│   │   ├── bearing_outer_L_speed_circulation_20Nm_2000rpm_250707201905.csv
+│   │   ├── bearing_outer_L_speed_circulation_20Nm_3000rpm_250707202312.csv
+│   │   ├── bearing_outer_L_speed_circulation_40Nm_1000rpm_250707201657.csv
+│   │   ├── bearing_outer_L_speed_circulation_40Nm_2000rpm_250707202109.csv
+│   │   └── bearing_outer_L_speed_circulation_40Nm_3000rpm_250707202603.csv
+│   └── torque_circulation
+│       ├── bearing_outer_H_torque_circulation_20Nm_1000rpm_250707090849.csv
+│       ├── bearing_outer_H_torque_circulation_20Nm_2000rpm_250707091128.csv
+│       ├── bearing_outer_H_torque_circulation_20Nm_3000rpm_250707091348.csv
+│       ├── bearing_outer_H_torque_circulation_40Nm_1000rpm_250707091627.csv
+│       ├── bearing_outer_H_torque_circulation_40Nm_2000rpm_250707091845.csv
+│       ├── bearing_outer_H_torque_circulation_40Nm_3000rpm_250707092043.csv
+│       ├── bearing_outer_L_torque_circulation_20Nm_1000rpm_250707195810.csv
+│       ├── bearing_outer_L_torque_circulation_20Nm_2000rpm_250707195613.csv
+│       ├── bearing_outer_L_torque_circulation_20Nm_3000rpm_250707200218.csv
+│       ├── bearing_outer_L_torque_circulation_40Nm_1000rpm_250707200424.csv
+│       ├── bearing_outer_L_torque_circulation_40Nm_2000rpm_250707200621.csv
+│       └── bearing_outer_L_torque_circulation_40Nm_3000rpm_250707200822.csv
+├── Bend
+│   ├── speed_circulation
+│   │   ├── bend_speed_circulation_20Nm_1000rpm_250706110331.csv
+│   │   ├── bend_speed_circulation_20Nm_2000rpm_250706111052.csv
+│   │   ├── bend_speed_circulation_20Nm_3000rpm_250706111537.csv
+│   │   ├── bend_speed_circulation_40Nm_1000rpm_250706110848.csv
+│   │   ├── bend_speed_circulation_40Nm_2000rpm_250706111324.csv
+│   │   └── bend_speed_circulation_40Nm_3000rpm_250706111808.csv
+│   └── torque_circulation
+│       ├── bend_torque_circulation_20Nm_1000rpm_250706104306.csv
+│       ├── bend_torque_circulation_20Nm_2000rpm_250706104528.csv
+│       ├── bend_torque_circulation_20Nm_3000rpm_250706104736.csv
+│       ├── bend_torque_circulation_40Nm_1000rpm_250706105009.csv
+│       ├── bend_torque_circulation_40Nm_2000rpm_250706105357.csv
+│       └── bend_torque_circulation_40Nm_3000rpm_250706105626.csv
+├── Broken_Bar
+│   ├── speed_circulation
+│   │   ├── broken_bar_H_speed_circulation_20Nm_1000rpm_250706123037.csv
+│   │   ├── broken_bar_H_speed_circulation_20Nm_2000rpm_250706123447.csv
+│   │   ├── broken_bar_H_speed_circulation_20Nm_3000rpm_250706123855.csv
+│   │   ├── broken_bar_H_speed_circulation_40Nm_1000rpm_250706123241.csv
+│   │   ├── broken_bar_H_speed_circulation_40Nm_2000rpm_250706123644.csv
+│   │   └── broken_bar_H_speed_circulation_40Nm_3000rpm_250706124054.csv
+│   └── torque_circulation
+│       ├── broken_bar_H_torque_circulation_20Nm_1000rpm_250706121652.csv
+│       ├── broken_bar_H_torque_circulation_20Nm_2000rpm_250706121930.csv
+│       ├── broken_bar_H_torque_circulation_20Nm_3000rpm_250706122143.csv
+│       ├── broken_bar_H_torque_circulation_40Nm_1000rpm_250706122406.csv
+│       ├── broken_bar_H_torque_circulation_40Nm_2000rpm_250706122621.csv
+│       └── broken_bar_H_torque_circulation_40Nm_3000rpm_250706122824.csv
+├── Broken_Bar-Bearing_Inner
+│   ├── speed_circulation
+│   │   ├── broken_bar_and_bearing_inner_H_speed_circulation_20Nm_1000rpm_250705152315.csv
+│   │   ├── broken_bar_and_bearing_inner_H_speed_circulation_20Nm_2000rpm_250705152820.csv
+│   │   ├── broken_bar_and_bearing_inner_H_speed_circulation_20Nm_3000rpm_250705153228.csv
+│   │   ├── broken_bar_and_bearing_inner_H_speed_circulation_40Nm_1000rpm_250705152524.csv
+│   │   ├── broken_bar_and_bearing_inner_H_speed_circulation_40Nm_2000rpm_250705153025.csv
+│   │   └── broken_bar_and_bearing_inner_H_speed_circulation_40Nm_3000rpm_250705153424.csv
+│   └── torque_circulation
+│       ├── broken_bar_and_bearing_inner_H_torque_circulation_20Nm_1000rpm_250705150843.csv
+│       ├── broken_bar_and_bearing_inner_H_torque_circulation_20Nm_2000rpm_250705151100.csv
+│       ├── broken_bar_and_bearing_inner_H_torque_circulation_20Nm_3000rpm_250705151324.csv
+│       ├── broken_bar_and_bearing_inner_H_torque_circulation_40Nm_1000rpm_250705151632.csv
+│       ├── broken_bar_and_bearing_inner_H_torque_circulation_40Nm_2000rpm_250705151846.csv
+│       └── broken_bar_and_bearing_inner_H_torque_circulation_40Nm_3000rpm_250705152056.csv
+├── Broken_Bar-Bearing_Outer
+│   ├── speed_circulation
+│   │   ├── broken_bar_and_bearing_outer_H_speed_circulation_20Nm_1000rpm_250705165643.csv
+│   │   ├── broken_bar_and_bearing_outer_H_speed_circulation_20Nm_2000rpm_250705170101.csv
+│   │   ├── broken_bar_and_bearing_outer_H_speed_circulation_20Nm_3000rpm_250705170512.csv
+│   │   ├── broken_bar_and_bearing_outer_H_speed_circulation_40Nm_1000rpm_250705165900.csv
+│   │   ├── broken_bar_and_bearing_outer_H_speed_circulation_40Nm_2000rpm_250705170306.csv
+│   │   └── broken_bar_and_bearing_outer_H_speed_circulation_40Nm_3000rpm_250705170719.csv
+│   └── torque_circulation
+│       ├── broken_bar_and_bearing_outer_H_torque_circulation_20Nm_1000rpm_250705164237.csv
+│       ├── broken_bar_and_bearing_outer_H_torque_circulation_20Nm_2000rpm_250705164449.csv
+│       ├── broken_bar_and_bearing_outer_H_torque_circulation_20Nm_3000rpm_250705164701.csv
+│       ├── broken_bar_and_bearing_outer_H_torque_circulation_40Nm_1000rpm_250705164924.csv
+│       ├── broken_bar_and_bearing_outer_H_torque_circulation_40Nm_2000rpm_250705165136.csv
+│       └── broken_bar_and_bearing_outer_H_torque_circulation_40Nm_3000rpm_250705165414.csv
+├── Health
+│   ├── speed_circulation
+│   │   ├── health_speed_circulation_20Nm_1000rpm_250706091847.csv
+│   │   ├── health_speed_circulation_20Nm_2000rpm_250706092413.csv
+│   │   ├── health_speed_circulation_20Nm_3000rpm_250706092929.csv
+│   │   ├── health_speed_circulation_40Nm_1000rpm_250706092103.csv
+│   │   ├── health_speed_circulation_40Nm_2000rpm_250706092658.csv
+│   │   └── health_speed_circulation_40Nm_3000rpm_250706093136.csv
+│   └── torque_circulation
+│       ├── health_torque_circulation_20Nm_1000rpm_250706090028.csv
+│       ├── health_torque_circulation_20Nm_2000rpm_250706090534.csv
+│       ├── health_torque_circulation_20Nm_3000rpm_250706090744.csv
+│       ├── health_torque_circulation_40Nm_1000rpm_250706090954.csv
+│       ├── health_torque_circulation_40Nm_2000rpm_250706091200.csv
+│       └── health_torque_circulation_40Nm_3000rpm_250706091413.csv
+├── Rotor_Misalignment
+│   ├── speed_circulation
+│   │   ├── Rotor_misalignment_H_speed_circulation_20Nm_1000rpm_250706190119.csv
+│   │   ├── Rotor_misalignment_H_speed_circulation_20Nm_2000rpm_250706190531.csv
+│   │   ├── Rotor_misalignment_H_speed_circulation_20Nm_3000rpm_250706190929.csv
+│   │   ├── Rotor_misalignment_H_speed_circulation_40Nm_1000rpm_250706190321.csv
+│   │   ├── Rotor_misalignment_H_speed_circulation_40Nm_2000rpm_250706190729.csv
+│   │   ├── Rotor_misalignment_H_speed_circulation_40Nm_3000rpm_250706191126.csv
+│   │   ├── Rotor_misalignment_L_speed_circulation_20Nm_1000rpm_250706183205.csv
+│   │   ├── Rotor_misalignment_L_speed_circulation_20Nm_2000rpm_250706183823.csv
+│   │   ├── Rotor_misalignment_L_speed_circulation_20Nm_3000rpm_250706184225.csv
+│   │   ├── Rotor_misalignment_L_speed_circulation_40Nm_1000rpm_250706183610.csv
+│   │   ├── Rotor_misalignment_L_speed_circulation_40Nm_2000rpm_250706184022.csv
+│   │   └── Rotor_misalignment_L_speed_circulation_40Nm_3000rpm_250706184457.csv
+│   └── torque_circulation
+│       ├── Rotor_misalignment_H_torque_circulation_20Nm_1000rpm_250706185444.csv
+│       ├── Rotor_misalignment_H_torque_circulation_20Nm_2000rpm_250706185658.csv
+│       ├── Rotor_misalignment_H_torque_circulation_20Nm_3000rpm_250706185857.csv
+│       ├── Rotor_misalignment_H_torque_circulation_40Nm_1000rpm_250706184831.csv
+│       ├── Rotor_misalignment_H_torque_circulation_40Nm_2000rpm_250706185038.csv
+│       ├── Rotor_misalignment_H_torque_circulation_40Nm_3000rpm_250706185237.csv
+│       ├── Rotor_misalignment_L_torque_circulation_20Nm_1000rpm_250706181812.csv
+│       ├── Rotor_misalignment_L_torque_circulation_20Nm_2000rpm_250706182025.csv
+│       ├── Rotor_misalignment_L_torque_circulation_20Nm_3000rpm_250706182232.csv
+│       ├── Rotor_misalignment_L_torque_circulation_40Nm_1000rpm_250706182428.csv
+│       ├── Rotor_misalignment_L_torque_circulation_40Nm_2000rpm_250706182641.csv
+│       └── Rotor_misalignment_L_torque_circulation_40Nm_3000rpm_250706182851.csv
+├── Rotor_Misalignment-Bearing_Inner
+│   ├── speed_circulation
+│   └── torque_circulation
+│       ├── Rotor_misalignment_and_bearing_inner_H_torque_circulation_20Nm_1000rpm_250704171540.csv
+│       ├── Rotor_misalignment_and_bearing_inner_H_torque_circulation_20Nm_2000rpm_250704171830.csv
+│       ├── Rotor_misalignment_and_bearing_inner_H_torque_circulation_20Nm_3000rpm_250704172046.csv
+│       ├── Rotor_misalignment_and_bearing_inner_H_torque_circulation_40Nm_1000rpm_250704172324.csv
+│       ├── Rotor_misalignment_and_bearing_inner_H_torque_circulation_40Nm_2000rpm_250704172642.csv
+│       └── Rotor_misalignment_and_bearing_inner_H_torque_circulation_40Nm_3000rpm_250704172917.csv
+├── Rotor_Misalignment-Bearing_Outer
+│   ├── speed_circulation
+│   │   ├── Rotor_misalignment_and_bearing_outer_H_speed_circulation_20Nm_1000rpm_250704173201.csv
+│   │   ├── Rotor_misalignment_and_bearing_outer_H_speed_circulation_20Nm_1000rpm_250704200621.csv
+│   │   ├── Rotor_misalignment_and_bearing_outer_H_speed_circulation_20Nm_2000rpm_250704173947.csv
+│   │   ├── Rotor_misalignment_and_bearing_outer_H_speed_circulation_20Nm_2000rpm_250704201036.csv
+│   │   ├── Rotor_misalignment_and_bearing_outer_H_speed_circulation_20Nm_3000rpm_250704174347.csv
+│   │   ├── Rotor_misalignment_and_bearing_outer_H_speed_circulation_20Nm_3000rpm_250704201757.csv
+│   │   ├── Rotor_misalignment_and_bearing_outer_H_speed_circulation_40Nm_1000rpm_250704173414.csv
+│   │   ├── Rotor_misalignment_and_bearing_outer_H_speed_circulation_40Nm_1000rpm_250704200826.csv
+│   │   ├── Rotor_misalignment_and_bearing_outer_H_speed_circulation_40Nm_2000rpm_250704174144.csv
+│   │   ├── Rotor_misalignment_and_bearing_outer_H_speed_circulation_40Nm_2000rpm_250704201243.csv
+│   │   ├── Rotor_misalignment_and_bearing_outer_H_speed_circulation_40Nm_3000rpm_250704174542.csv
+│   │   └── Rotor_misalignment_and_bearing_outer_H_speed_circulation_40Nm_3000rpm_250704202009.csv
+│   └── torque_circulation
+│       ├── Rotor_misalignment_and_bearing_outer_H_torque_circulation_20Nm_1000rpm_250704195015.csv
+│       ├── Rotor_misalignment_and_bearing_outer_H_torque_circulation_20Nm_2000rpm_250704195320.csv
+│       ├── Rotor_misalignment_and_bearing_outer_H_torque_circulation_20Nm_3000rpm_250704195542.csv
+│       ├── Rotor_misalignment_and_bearing_outer_H_torque_circulation_40Nm_1000rpm_250704195806.csv
+│       ├── Rotor_misalignment_and_bearing_outer_H_torque_circulation_40Nm_2000rpm_250704200101.csv
+│       └── Rotor_misalignment_and_bearing_outer_H_torque_circulation_40Nm_3000rpm_250704200401.csv
+├── Rotor_Unbalance
+│   ├── speed_circulation
+│   │   ├── Rotor_unbalance_speed_circulation_20Nm_1000rpm_250706100039.csv
+│   │   ├── Rotor_unbalance_speed_circulation_20Nm_2000rpm_250706100456.csv
+│   │   ├── Rotor_unbalance_speed_circulation_20Nm_3000rpm_250706100911.csv
+│   │   ├── Rotor_unbalance_speed_circulation_40Nm_1000rpm_250706100252.csv
+│   │   ├── Rotor_unbalance_speed_circulation_40Nm_2000rpm_250706100657.csv
+│   │   └── Rotor_unbalance_speed_circulation_40Nm_3000rpm_250706101114.csv
+│   └── torque_circulation
+│       ├── Rotor_unbalance_torque_circulation_20Nm_1000rpm_250706094752.csv
+│       ├── Rotor_unbalance_torque_circulation_20Nm_2000rpm_250706094955.csv
+│       ├── Rotor_unbalance_torque_circulation_20Nm_3000rpm_250706095156.csv
+│       ├── Rotor_unbalance_torque_circulation_40Nm_1000rpm_250706095410.csv
+│       ├── Rotor_unbalance_torque_circulation_40Nm_2000rpm_250706095616.csv
+│       └── Rotor_unbalance_torque_circulation_40Nm_3000rpm_250706095821.csv
+├── Rotor_Unbalance-Bearing_Inner
+│   ├── speed_circulation
+│   │   ├── Rotor_unbalance_and_bearing_inner_H_speed_circulation_20Nm_1000rpm_250704205033.csv
+│   │   ├── Rotor_unbalance_and_bearing_inner_H_speed_circulation_20Nm_2000rpm_250704205446.csv
+│   │   ├── Rotor_unbalance_and_bearing_inner_H_speed_circulation_20Nm_3000rpm_250704205926.csv
+│   │   ├── Rotor_unbalance_and_bearing_inner_H_speed_circulation_40Nm_1000rpm_250704205244.csv
+│   │   ├── Rotor_unbalance_and_bearing_inner_H_speed_circulation_40Nm_2000rpm_250704205706.csv
+│   │   └── Rotor_unbalance_and_bearing_inner_H_speed_circulation_40Nm_3000rpm_250704210126.csv
+│   └── torque_circulation
+│       ├── Rotor_unbalance_and_bearing_inner_H_torque_circulation_20Nm_1000rpm_250704203702.csv
+│       ├── Rotor_unbalance_and_bearing_inner_H_torque_circulation_20Nm_2000rpm_250704203940.csv
+│       ├── Rotor_unbalance_and_bearing_inner_H_torque_circulation_20Nm_3000rpm_250704204150.csv
+│       ├── Rotor_unbalance_and_bearing_inner_H_torque_circulation_40Nm_1000rpm_250704204404.csv
+│       ├── Rotor_unbalance_and_bearing_inner_H_torque_circulation_40Nm_2000rpm_250704204613.csv
+│       └── Rotor_unbalance_and_bearing_inner_H_torque_circulation_40Nm_3000rpm_250704204818.csv
+├── Rotor_Unbalance-Bearing_Outer
+│   ├── speed_circulation
+│   │   ├── Rotor_unbalance_and_bearing_outer_H_speed_circulation_20Nm_1000rpm_250704163349.csv
+│   │   ├── Rotor_unbalance_and_bearing_outer_H_speed_circulation_20Nm_2000rpm_250704163818.csv
+│   │   ├── Rotor_unbalance_and_bearing_outer_H_speed_circulation_20Nm_3000rpm_250704164526.csv
+│   │   ├── Rotor_unbalance_and_bearing_outer_H_speed_circulation_40Nm_1000rpm_250704163555.csv
+│   │   ├── Rotor_unbalance_and_bearing_outer_H_speed_circulation_40Nm_2000rpm_250704164252.csv
+│   │   └── Rotor_unbalance_and_bearing_outer_H_speed_circulation_40Nm_3000rpm_250704170637.csv
+│   └── torque_circulation
+│       ├── Rotor_unbalance_and_bearing_outer_H_torque_circulation_20Nm_1000rpm_250704160720.csv
+│       ├── Rotor_unbalance_and_bearing_outer_H_torque_circulation_20Nm_2000rpm_250704161052.csv
+│       ├── Rotor_unbalance_and_bearing_outer_H_torque_circulation_20Nm_3000rpm_250704161829.csv
+│       ├── Rotor_unbalance_and_bearing_outer_H_torque_circulation_40Nm_1000rpm_250704162340.csv
+│       ├── Rotor_unbalance_and_bearing_outer_H_torque_circulation_40Nm_2000rpm_250704162545.csv
+│       └── Rotor_unbalance_and_bearing_outer_H_torque_circulation_40Nm_3000rpm_250704163043.csv
+├── Voltage_Unbalance-Torque_Circulation
+│   ├── voltage_unbalance_L_torque_circulation_20Nm_1000rpm_250708105817.csv
+│   ├── voltage_unbalance_L_torque_circulation_20Nm_2000rpm_250708105154.csv
+│   ├── voltage_unbalance_L_torque_circulation_20Nm_3000rpm_250708104957.csv
+│   ├── voltage_unbalance_L_torque_circulation_40Nm_1000rpm_250708105620.csv
+│   ├── voltage_unbalance_L_torque_circulation_40Nm_2000rpm_250708105418.csv
+│   └── voltage_unbalance_L_torque_circulation_40Nm_3000rpm_250708104756.csv
+├── Winding
+│   ├── speed_circulation
+│   │   ├── winding_H_speed_circulation_20Nm_1000rpm_250706134835.csv
+│   │   ├── winding_H_speed_circulation_20Nm_2000rpm_250706135247.csv
+│   │   ├── winding_H_speed_circulation_20Nm_3000rpm_250706135712.csv
+│   │   ├── winding_H_speed_circulation_40Nm_1000rpm_250706135039.csv
+│   │   ├── winding_H_speed_circulation_40Nm_2000rpm_250706135448.csv
+│   │   ├── winding_H_speed_circulation_40Nm_3000rpm_250706135912.csv
+│   │   ├── winding_L_speed_circulation_20Nm_1000rpm_250706131801.csv
+│   │   ├── winding_L_speed_circulation_20Nm_2000rpm_250706132207.csv
+│   │   ├── winding_L_speed_circulation_20Nm_3000rpm_250706132722.csv
+│   │   ├── winding_L_speed_circulation_40Nm_1000rpm_250706131955.csv
+│   │   ├── winding_L_speed_circulation_40Nm_2000rpm_250706132405.csv
+│   │   └── winding_L_speed_circulation_40Nm_3000rpm_250706132916.csv
+│   └── torque_circulation
+│       ├── winding_H_torque_circulation_20Nm_1000rpm_250706133431.csv
+│       ├── winding_H_torque_circulation_20Nm_2000rpm_250706133658.csv
+│       ├── winding_H_torque_circulation_20Nm_3000rpm_250706133921.csv
+│       ├── winding_H_torque_circulation_40Nm_1000rpm_250706134123.csv
+│       ├── winding_H_torque_circulation_40Nm_2000rpm_250706134320.csv
+│       ├── winding_H_torque_circulation_40Nm_3000rpm_250706134617.csv
+│       ├── winding_L_torque_circulation_20Nm_1000rpm_250706130307.csv
+│       ├── winding_L_torque_circulation_20Nm_2000rpm_250706130508.csv
+│       ├── winding_L_torque_circulation_20Nm_3000rpm_250706130728.csv
+│       ├── winding_L_torque_circulation_40Nm_1000rpm_250706131146.csv
+│       ├── winding_L_torque_circulation_40Nm_2000rpm_250706131346.csv
+│       └── winding_L_torque_circulation_40Nm_3000rpm_250706131544.csv
+├── Winding-Bearing_Inner
+│   ├── speed_circulation
+│   │   ├── winding_and_bearing_inner_H_speed_circulation_20Nm_1000rpm_250705161503.csv
+│   │   ├── winding_and_bearing_inner_H_speed_circulation_20Nm_2000rpm_250705161911.csv
+│   │   ├── winding_and_bearing_inner_H_speed_circulation_20Nm_3000rpm_250705162327.csv
+│   │   ├── winding_and_bearing_inner_H_speed_circulation_40Nm_1000rpm_250705161704.csv
+│   │   ├── winding_and_bearing_inner_H_speed_circulation_40Nm_2000rpm_250705162113.csv
+│   │   └── winding_and_bearing_inner_H_speed_circulation_40Nm_3000rpm_250705162603.csv
+│   └── torque_circulation
+│       ├── winding_and_bearing_inner_H_torque_circulation_20Nm_1000rpm_250705155251.csv
+│       ├── winding_and_bearing_inner_H_torque_circulation_20Nm_2000rpm_250705155521.csv
+│       ├── winding_and_bearing_inner_H_torque_circulation_20Nm_3000rpm_250705155732.csv
+│       ├── winding_and_bearing_inner_H_torque_circulation_40Nm_1000rpm_250705155946.csv
+│       ├── winding_and_bearing_inner_H_torque_circulation_40Nm_2000rpm_250705160220.csv
+│       └── winding_and_bearing_inner_H_torque_circulation_40Nm_3000rpm_250705160615.csv
+├── Winding-Bearing_Outer
+│   ├── speed_circulation
+│   │   ├── winding_and_bearing_outer_H_speed_circulation_20Nm_1000rpm_250705143330.csv
+│   │   ├── winding_and_bearing_outer_H_speed_circulation_20Nm_2000rpm_250705143742.csv
+│   │   ├── winding_and_bearing_outer_H_speed_circulation_20Nm_3000rpm_250705144148.csv
+│   │   ├── winding_and_bearing_outer_H_speed_circulation_40Nm_1000rpm_250705143537.csv
+│   │   ├── winding_and_bearing_outer_H_speed_circulation_40Nm_2000rpm_250705143943.csv
+│   │   └── winding_and_bearing_outer_H_speed_circulation_40Nm_3000rpm_250705144343.csv
+│   └── torque_circulation
+│       ├── winding_and_bearing_outer_H_torque_circulation_20Nm_1000rpm_250705141827.csv
+│       ├── winding_and_bearing_outer_H_torque_circulation_20Nm_2000rpm_250705142214.csv
+│       ├── winding_and_bearing_outer_H_torque_circulation_20Nm_3000rpm_250705142420.csv
+│       ├── winding_and_bearing_outer_H_torque_circulation_40Nm_1000rpm_250705142638.csv
+│       ├── winding_and_bearing_outer_H_torque_circulation_40Nm_2000rpm_250705142854.csv
+│       └── winding_and_bearing_outer_H_torque_circulation_40Nm_3000rpm_250705143125.csv
+├── README.txt
+└── tree.txt
