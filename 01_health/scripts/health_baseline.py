@@ -1,18 +1,18 @@
 """
-Health-базлайн ZZU-MCC5 — чистовой извлекатель (по health_baseline_catalog.md).
+ZZU-MCC5 health baseline - clean extractor (per health_baseline_catalog.md).
 
-Единица анализа — ПОЛКА (рабочая точка), не файл. Каждый health-файл даёт
-несколько полок; каждая полка -> одна строка таблицы.
+Unit of analysis is the PLATEAU (operating point), not the file. Each health file
+yields several plateaus; each plateau -> one table row.
 
-Каналы (подтверждено разведкой, раздел 0-bis каталога):
-  col0  — счётчик времени (пила, наклон 1.0/с) -> ОТБРАСЫВАЕТСЯ
-  col1  — keyphase
-  col2..4 — вибрация (3 оси, ярлык оси пока не присвоен)
-  col5..7 — ток (3 фазы)
-  Момента как канала НЕТ -> нагрузка = номинал из имени, полки по скорости.
+Channels (confirmed by recon, catalog section 0-bis):
+  col0    - time counter (sawtooth, slope 1.0/s) -> DROPPED
+  col1    - keyphase
+  col2..4 - vibration (3 axes, axis label not assigned yet)
+  col5..7 - current (3 phases)
+  There is NO torque channel -> load = nominal from filename, plateaus by speed.
 
-Окна: flat-top для АМПЛИТУД (vib 1x/2x/3x), Ханнинг для ПОЛОВ/дБ/SNR.
-Полюса: жёстко 2 (n_s = 60*f1).
+Windows: flat-top for AMPLITUDES (vib 1x/2x/3x), Hann for FLOORS/dB/SNR.
+Poles: fixed at 2 (n_s = 60*f1).
 """
 import os, glob, re
 import numpy as np
@@ -20,26 +20,26 @@ import pandas as pd
 from scipy.signal.windows import flattop
 
 FS = 12800.0
-# --- полки ---
-PLATEAU_TOL_RPM = 40.0     # размах внутри полки для склейки (об/мин)
-PLATEAU_MIN_SEC = 4.0      # мин. длина полки после отступов
-EDGE_MARGIN = 1.0          # отступ от краёв полки, с
-MAX_WIN_SEC = 18.0         # макс. окно внутри полки
-# --- подокна для разброса ---
+# --- plateaus ---
+PLATEAU_TOL_RPM = 40.0     # rpm spread within a plateau for merging
+PLATEAU_MIN_SEC = 4.0      # min plateau length after margins
+EDGE_MARGIN = 1.0          # margin from plateau edges, s
+MAX_WIN_SEC = 18.0         # max window inside a plateau
+# --- sub-windows for spread ---
 SUB_SEC = 4.0
 SUB_STEP = 2.0
-# --- полосы/пороги ---
-GUARD_BINS = 3             # защитная зона вокруг f1, бинов
+# --- bands/thresholds ---
+GUARD_BINS = 3             # guard zone around f1, in bins
 
 # ======================================================================
-# Чтение и опознание каналов
+# Reading and channel identification
 # ======================================================================
 def load_clean(path):
     X = pd.read_csv(path, header=None).dropna(axis=1, how="all").values.astype(float)
     return X
 
 def _is_timer(col):
-    """Счётчик времени: пила с наклоном ~1.0/с и периодическими сбросами."""
+    """Time counter: sawtooth with slope ~1.0/s and periodic resets."""
     d = np.diff(col)
     pos = d[d > 0]
     if len(pos) < 100:
@@ -71,7 +71,7 @@ def classify(X):
                 timer=(timer[0] if timer else None))
 
 # ======================================================================
-# Скорость и полки
+# Speed and plateaus
 # ======================================================================
 def instantaneous_rpm(kp):
     thr = kp.min() + 0.5 * (kp.max() - kp.min()); above = kp > thr
@@ -104,17 +104,17 @@ def speed_jitter_pct(kp):
     return float(np.std(iv) / np.median(iv) * 100.0)
 
 # ======================================================================
-# Спектры: два окна
+# Spectra: two windows
 # ======================================================================
 def spec_db_hann(sig):
-    """дБ относительно максимума (= f1). Для полов/SNR."""
+    """dB relative to the maximum (= f1). For floors/SNR."""
     x = (sig - sig.mean()) * np.hanning(len(sig))
     sp = np.abs(np.fft.rfft(x)); sp[0] = 0
     f = np.fft.rfftfreq(len(x), 1 / FS)
     return f, 20 * np.log10(sp / (sp.max() + 1e-12) + 1e-12)
 
 def amp_flattop(sig, fc, search_bins=4):
-    """Физ. амплитуда синуса на частоте fc (flat-top, точная амплитуда)."""
+    """Physical amplitude of a sine at frequency fc (flat-top, accurate amplitude)."""
     w = flattop(len(sig)); x = (sig - sig.mean()) * w
     sp = np.abs(np.fft.rfft(x)) * 2.0 / np.sum(w)
     f = np.fft.rfftfreq(len(x), 1 / FS)
@@ -123,7 +123,7 @@ def amp_flattop(sig, fc, search_bins=4):
     return float(sp[k0:k1].max())
 
 def f1_of(sig, fmin=3.0, fmax=80.0):
-    """f1 с параболической интерполяцией пика."""
+    """f1 with parabolic peak interpolation."""
     x = (sig - sig.mean()) * np.hanning(len(sig))
     sp = np.abs(np.fft.rfft(x)); f = np.fft.rfftfreq(len(x), 1 / FS)
     b = (f >= fmin) & (f <= fmax); idx = np.where(b)[0]
@@ -140,11 +140,11 @@ def band_floor_db(f, spd, fc_lo, fc_hi):
     return float(spd[m].max()) if m.any() else np.nan
 
 # ======================================================================
-# Ток: THD и небаланс
+# Current: THD and unbalance
 # ======================================================================
-def _amp_at(f, sp, freq, hb=2):
+def _amp_at(f, sp, freq, half_bins=2):
     k = int(round(freq / (f[1] - f[0])))
-    k0, k1 = max(0, k - hb), min(len(sp), k + hb + 1)
+    k0, k1 = max(0, k - half_bins), min(len(sp), k + half_bins + 1)
     return sp[k0:k1].max() if k1 > k0 else 0.0
 
 def thd_pct(sig, f1, nharm=7):
@@ -166,19 +166,19 @@ def unbalance_pct(A, B, C, f1):
     return float(small / (big + 1e-12) * 100.0)
 
 # ======================================================================
-# Метрики на ОДНОМ окне (полке или подокне)
+# Metrics on ONE window (plateau or sub-window)
 # ======================================================================
 def metrics_on_window(seg, cur_idx, vib_idx, rpm_w):
-    """seg: срез X по времени. Возвращает dict метрик группы 2-3 для окна."""
+    """seg: time slice of X. Returns a dict of group 2-3 metrics for the window."""
     A = seg[:, cur_idx[0]]; B = seg[:, cur_idx[1]]; C = seg[:, cur_idx[2]]
     f1 = f1_of(A); n_s = 60.0 * f1; slip = (n_s - rpm_w) / n_s
     off = 2 * slip * f1; fr = rpm_w / 60.0
     f, spd = spec_db_hann(A)
     df = f[1] - f[0]; guard = GUARD_BINS * df
-    # пол полос обрыва стержня: f1 ± (guard .. off)
+    # broken-bar sideband floor: f1 +/- (guard .. off)
     sb_bb = max(band_floor_db(f, spd, f1 - off, f1 - guard),
                 band_floor_db(f, spd, f1 + guard, f1 + off))
-    # пол токовых полос дисбаланса: f1 ± fr
+    # imbalance current-sideband floor: f1 +/- fr
     half = max(3 * df, 0.15 * fr)
     cur_sb = max(band_floor_db(f, spd, f1 - fr - half, f1 - fr + half),
                  band_floor_db(f, spd, f1 + fr - half, f1 + fr + half))
@@ -186,7 +186,7 @@ def metrics_on_window(seg, cur_idx, vib_idx, rpm_w):
              sb_floor_bb_dB=sb_bb, cur_sb_1x_dB=cur_sb,
              I_rms=float(np.sqrt(np.mean((A - A.mean()) ** 2))),
              thd_pct=thd_pct(A, f1), unbalance_pct=unbalance_pct(A, B, C, f1))
-    # вибрация — амплитуды flat-top
+    # vibration - flat-top amplitudes
     for lab, ci in zip(("c2", "c3", "c4"), vib_idx):
         v = seg[:, ci]
         d[f"vib_1x_{lab}"] = amp_flattop(v, fr)
@@ -198,7 +198,7 @@ FLOOR_KEYS = ["sb_floor_bb_dB", "cur_sb_1x_dB",
               "vib_1x_c2", "vib_1x_c3", "vib_1x_c4"]
 
 # ======================================================================
-# Обработка файла -> строки по полкам
+# File processing -> plateau rows
 # ======================================================================
 def parse_regime(fname):
     L = re.search(r"(\d+)Nm", fname); R = re.search(r"(\d+)rpm", fname)
@@ -220,9 +220,9 @@ def process_file(path):
         t1 = min(t1, t0 + MAX_WIN_SEC)
         i0, i1 = int(t0 * FS), int(t1 * FS)
         seg_full = X[i0:i1]
-        # рабочая точка — по полному окну полки
+        # working point - over the full plateau window
         base = metrics_on_window(seg_full, ch["current"], ch["vibration"], rp)
-        # разброс — по подокнам
+        # spread - over sub-windows
         sub_vals = {k: [] for k in FLOOR_KEYS}
         st = t0; nsub = 0
         while st + SUB_SEC <= t1 + 1e-6:
@@ -238,16 +238,16 @@ def process_file(path):
                                and abs(rp - round(rp / 500) * 500) < 60),
                    plateau_dur_s=round(t1 - t0, 1), n_sub=nsub,
                    speed_jitter_pct=round(jitter, 3))
-        # рабочая точка
+        # working point
         row.update(f1_Hz=round(base["f1"], 3), fr_Hz=round(base["fr"], 3),
                    slip_pct=round(base["slip"], 3), sb_offset_Hz=round(base["off"], 3))
-        # полы/ток (mean по полке)
+        # floors/current (plateau mean)
         for k in ["sb_floor_bb_dB", "cur_sb_1x_dB", "I_rms", "thd_pct", "unbalance_pct"]:
             row[k] = round(base[k], 3)
         for lab in ("c2", "c3", "c4"):
             for h in ("1x", "2x", "3x"):
                 row[f"vib_{h}_{lab}"] = round(base[f"vib_{h}_{lab}"], 6)
-        # внутриполочный разброс
+        # within-plateau spread
         for k in FLOOR_KEYS:
             arr = np.array(sub_vals[k]) if sub_vals[k] else np.array([base[k]])
             row[f"{k}__std_in"] = round(float(arr.std()), 3)
@@ -256,8 +256,8 @@ def process_file(path):
     return rows, ch
 
 def collect_health_files(root):
-    """Рекурсивно собирает health-файлы из root и подпапок (speed/torque_circulation).
-       Отбор регуляркой по Nm/rpm — защита от опечаток в слове circulation."""
+    """Recursively collect health files from root and subfolders (speed/torque_circulation).
+       Filtering by Nm/rpm regex - guards against typos in the word 'circulation'."""
     found = glob.glob(os.path.join(root, "**", "*.csv"), recursive=True)
     out = []
     for p in found:
@@ -273,68 +273,68 @@ def make_plots(tab, out_dir):
     C = {"speed": "#1f77b4", "torque": "#ff7f0e"}
     fig, ax = plt.subplots(2, 2, figsize=(14, 10))
 
-    # (1) f1 vs rpm — линейность => 2 полюса и работа привода
+    # (1) f1 vs rpm - linearity => 2 poles and drive operation
     for proto, g in tab.groupby("protocol"):
         ax[0, 0].scatter(g["rpm_meas"], g["f1_Hz"], c=C.get(proto, "gray"),
                          label=proto, s=45, edgecolor="k", lw=0.4)
     rr = np.array([tab["rpm_meas"].min(), tab["rpm_meas"].max()])
-    ax[0, 0].plot(rr, rr / 60.0, "k--", lw=0.8, label="f1 = rpm/60 (иде-ал 2 полюса, s=0)")
-    ax[0, 0].set(title="f1 vs скорость (линейность => 2 полюса)",
-                 xlabel="об/мин", ylabel="f1, Гц"); ax[0, 0].legend(fontsize=8); ax[0, 0].grid(alpha=0.3)
+    ax[0, 0].plot(rr, rr / 60.0, "k--", lw=0.8, label="f1 = rpm/60 (ideal 2-pole, s=0)")
+    ax[0, 0].set(title="f1 vs speed (linearity => 2 poles)",
+                 xlabel="rpm", ylabel="f1, Hz"); ax[0, 0].legend(fontsize=8); ax[0, 0].grid(alpha=0.3)
 
-    # (2) slip vs скорость, по нагрузке
+    # (2) slip vs speed, by load
     for (proto, load), g in tab.groupby(["protocol", "load_nominal_Nm"]):
         ax[0, 1].scatter(g["rpm_meas"], g["slip_pct"], c=C.get(proto, "gray"),
                          marker="o" if load == 40 else "s", s=45, edgecolor="k", lw=0.4,
-                         label=f"{proto} {load}Н·м")
-    ax[0, 1].set(title="Скольжение vs скорость", xlabel="об/мин", ylabel="s, %")
+                         label=f"{proto} {load}Nm")
+    ax[0, 1].set(title="Slip vs speed", xlabel="rpm", ylabel="s, %")
     ax[0, 1].legend(fontsize=7); ax[0, 1].grid(alpha=0.3)
 
-    # (3) полы боковых полос vs скорость, с внутриполочным разбросом
+    # (3) broken-bar sideband floor vs speed, with within-plateau spread
     for proto, g in tab.groupby("protocol"):
         ax[1, 0].errorbar(g["rpm_meas"], g["sb_floor_bb_dB"], yerr=g["sb_floor_bb_dB__ptp_in"],
-                          fmt="o", c=C.get(proto, "gray"), capsize=3, label=f"{proto} обрыв-пол",
+                          fmt="o", c=C.get(proto, "gray"), capsize=3, label=f"{proto} bb-floor",
                           ms=6, mec="k", mew=0.4)
-    ax[1, 0].set(title="Пол полос обрыва стержня (± разброс) — будущий порог",
-                 xlabel="об/мин", ylabel="дБ отн. f1"); ax[1, 0].legend(fontsize=8); ax[1, 0].grid(alpha=0.3)
+    ax[1, 0].set(title="Broken-bar sideband floor (+/- spread) - future threshold",
+                 xlabel="rpm", ylabel="dB rel. f1"); ax[1, 0].legend(fontsize=8); ax[1, 0].grid(alpha=0.3)
 
-    # (4) 1x вибрации по 3 осям vs скорость
+    # (4) vibration 1x per 3 axes vs speed
     for lab, mk in zip(("c2", "c3", "c4"), ("o", "s", "^")):
         ax[1, 1].scatter(tab["rpm_meas"], tab[f"vib_1x_{lab}"], marker=mk, s=45,
                          edgecolor="k", lw=0.4, label=f"1x {lab}")
-    ax[1, 1].set(title="1x вибрации по осям vs скорость (база остаточного дисбаланса)",
-                 xlabel="об/мин", ylabel="амплитуда (отн.)"); ax[1, 1].legend(fontsize=8); ax[1, 1].grid(alpha=0.3)
+    ax[1, 1].set(title="Vibration 1x per axis vs speed (residual imbalance baseline)",
+                 xlabel="rpm", ylabel="amplitude (rel.)"); ax[1, 1].legend(fontsize=8); ax[1, 1].grid(alpha=0.3)
 
     plt.tight_layout()
     fig_path = os.path.join(out_dir, "health_baseline_validation.png")
     plt.savefig(fig_path, dpi=120)
-    print("График:", fig_path)
+    print("Figure:", fig_path)
 
 def crossing_report(tab):
-    """Согласованность метрик в точках, достигнутых ОБОИМИ протоколами
-       (одинаковые rpm_level и нагрузка) — стоимость объединения протоколов."""
-    print("\n=== Точки пересечения протоколов (σ_между) ===")
+    """Metric agreement at points reached by BOTH protocols
+       (same rpm_level and load) - the cost of merging protocols."""
+    print("\n=== Protocol crossing points (between-protocol spread) ===")
     key = ["rpm_level", "load_nominal_Nm"]
     any_found = False
     for (lvl, load), g in tab.groupby(key):
         if g["protocol"].nunique() < 2:
             continue
         any_found = True
-        print(f"  {lvl} об/мин, {load} Н·м  (протоколы: {sorted(g['protocol'].unique())})")
+        print(f"  {lvl} rpm, {load} Nm  (protocols: {sorted(g['protocol'].unique())})")
         for k in ["f1_Hz", "slip_pct", "sb_floor_bb_dB", "cur_sb_1x_dB"]:
             sp = g[g.protocol == "speed"][k].mean(); tq = g[g.protocol == "torque"][k].mean()
-            print(f"     {k:16s}: speed {sp:8.3f} | torque {tq:8.3f} | Δ {abs(sp - tq):7.3f}")
+            print(f"     {k:16s}: speed {sp:8.3f} | torque {tq:8.3f} | delta {abs(sp - tq):7.3f}")
     if not any_found:
-        print("  (нет режимов, покрытых обоими протоколами в этом наборе)")
+        print("  (no regimes covered by both protocols in this set)")
 
 def main():
     import sys
     root = sys.argv[1] if len(sys.argv) > 1 else os.path.dirname(os.path.abspath(__file__))
-    print("Корень поиска:", root)
+    print("Search root:", root)
     files = collect_health_files(root)
     if not files:
-        print("Health-файлы не найдены (искал рекурсивно health_*Nm*rpm*.csv)."); return
-    print(f"Найдено файлов: {len(files)}")
+        print("No health files found (searched recursively for health_*Nm*rpm*.csv)."); return
+    print(f"Files found: {len(files)}")
     all_rows = []; chmaps = []
     for f in files:
         print("...", os.path.relpath(f, root))
@@ -344,29 +344,29 @@ def main():
     out = os.path.join(root, "health_baseline_plateaus.csv")
     tab.to_csv(out, index=False)
 
-    # --- санитария: консистентность карты каналов ---
-    print("\n=== Карта каналов по файлам ===")
+    # --- sanity: channel-map consistency ---
+    print("\n=== Channel map per file ===")
     ref = chmaps[0][1]; consistent = True
     for name, ch in chmaps:
         same = (ch["keyphase"] == ref["keyphase"] and ch["current"] == ref["current"]
                 and ch["vibration"] == ref["vibration"])
         consistent &= same
         print(f"  {name}: kp={ch['keyphase']} cur={ch['current']} vib={ch['vibration']} "
-              f"timer={ch['timer']} {'' if same else '<< ОТЛИЧАЕТСЯ'}")
-    print(f"  консистентна: {consistent}")
-    # слип в диапазоне?
+              f"timer={ch['timer']} {'' if same else '<< DIFFERS'}")
+    print(f"  consistent: {consistent}")
+    # slip within range?
     bad = tab[(tab.slip_pct <= 0) | (tab.slip_pct > 6)]
-    print(f"  слип вне (0..6%]: {len(bad)} полок" + (" — OK" if bad.empty else " << ПРОВЕРИТЬ"))
+    print(f"  slip out of (0..6%]: {len(bad)} plateaus" + (" - OK" if bad.empty else " << CHECK"))
 
     pd.set_option("display.width", 260, "display.max_columns", 80)
     show = ["protocol", "load_nominal_Nm", "rpm_meas", "on_grid", "f1_Hz", "slip_pct",
             "sb_offset_Hz", "sb_floor_bb_dB", "cur_sb_1x_dB",
             "vib_1x_c2", "vib_1x_c3", "vib_1x_c4", "thd_pct", "unbalance_pct", "n_sub"]
-    print("\n=== База по полкам (ключевые столбцы) ===")
+    print("\n=== Baseline per plateau (key columns) ===")
     print(tab[show].to_string(index=False))
     crossing_report(tab)
     make_plots(tab, root)
-    print("\nСохранено:", out)
+    print("\nSaved:", out)
     return tab
 
 if __name__ == "__main__":
