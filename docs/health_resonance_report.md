@@ -5,12 +5,12 @@ test rig's ~50 Hz mechanical resonance is confirmed.
 
 **Object:** three-phase squirrel-cage induction motor, 2.2 kW, 2-pole, VFD-driven.
 Sampling 12 800 Hz, record length 90 s. **Scripts:** `health_baseline.py`,
-`health_visualize.py`, `resonanse_check.py`.
+`health_visualize.py`, `resonance_check.py`.
 
 > **Figures.** Summary figures are the standard English outputs of the scripts.
 > `health_baseline_validation.png` comes from `health_baseline.py`;
 > `resonance_c3_spectra_overlay.png` and `resonance_transmissibility.png` from
-> `resonanse_check.py`; per-file `viz_*.png` sheets from `health_visualize.py`.
+> `resonance_check.py`; per-file `viz_*.png` sheets from `health_visualize.py`.
 > They are referenced from a `figures/` folder next to this report.
 
 ---
@@ -26,7 +26,7 @@ recognised as a **deviation** from it.
 The report covers two experiments:
 - **`health_baseline.py`** — walks all healthy records, cuts each into steady segments,
   and measures the full set of normal parameters. Builds the baseline and validates it.
-- **`resonanse_check.py`** — tests a hypothesis that surfaced during the baseline
+- **`resonance_check.py`** — tests a hypothesis that surfaced during the baseline
   analysis: that the rig has a mechanical resonance near 50 Hz that distorts vibration
   at 3000 rpm.
 
@@ -134,7 +134,7 @@ regardless of rpm — while the 1× *moves* with speed. Intermediate speed-proto
 plateaus put 1× at 24–41 Hz (away from 50). If a fixed peak still sits at ~50 Hz, that
 is H1.
 
-> Regenerate these two figures in English with `resonanse_check.py` on the health data.
+> Regenerate these two figures in English with `resonance_check.py` on the health data.
 
 ![Resonance: c3 spectra overlaid by speed — a fixed peak at 50 Hz](https://github.com/system-logic/motor-fault-diagnosis/blob/main/01_health/outputs/resonance_c3_spectra_overlay.png)
 
