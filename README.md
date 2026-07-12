@@ -3,9 +3,9 @@
 **Physics-first fault diagnosis of an induction motor — an open research series on public data.**
 
 Electrical Signature Analysis (MCSA) and vibration analysis of a 2.2 kW VFD-driven induction
-motor: healthy baseline → broken rotor bar → (in progress) unbalance, misalignment, bearings.
-Every claim is validated against the physics of the machine, every threshold is justified,
-negative controls are run, and dead ends are documented instead of hidden.
+motor: healthy baseline → broken rotor bar → rotor imbalance → (in progress) misalignment,
+bearings. Every claim is validated against the physics of the machine, every threshold is
+justified, negative controls are run, and dead ends are documented instead of hidden.
 
 > **Why this repo looks the way it does.** This is not a "train a classifier on
 > spectrograms" project. The goal is a diagnosis you can *defend*: each fault signature is
@@ -28,6 +28,8 @@ negative controls are run, and dead ends are documented instead of hidden.
 | 7 | **Two negative controls pass** — phase unbalance stays at baseline (0.06–0.34 %), and a signature-free control zone (f1 ± fr) stays empty | `02_broken_bar` |
 | 8 | **A naive alarm indicator fails on real rig data — and is replaced.** "Level minus healthy floor" scatters by up to ~15 dB between rig protocols at the same operating point, and the floor is simply *undefined* in 4 of 6 torque regimes. Replaced with a **self-sufficient SNR** (band prominence over its own local floor in the same window) — no cross-protocol calibration needed | [report §5.2](docs/broken_bar_report.md) |
 | 9 | **Load is the strength axis, speed is the resolvability axis** — median first-band SNR 37 dB at 40 Nm vs 19 dB at 20 Nm; the true method limit found at low speed + high load (477 rpm, f1 ≈ 8.3 Hz: the 0.72 Hz offset hugs the f1 skirt, SNR drops to ~2 dB) | [report §5.3–5.4](docs/broken_bar_report.md) |
+| 10 | **The ω² law of rotor imbalance holds** — vibration 1× vs rotation frequency fits n = 2.11, R² = 0.981 over 12 plateaus, both loads on one line; load-independence control CoV 0.8–6.8 % per file; the 50 Hz resonance amplifies the fault 1× ×4.7–5.5 (the max-sensitivity zone, excluded from the law) | `03_rotor_unbalance`, [imbalance report](docs/imbalance_report.md) |
+| 11 | **The 2-pole trap found, dissected and closed** — on a 2-pole machine the EM line at f1 sits only s·f1 from the mechanical 1×; a wide peak search returned the wrong line and bent the ω² exponent to ~1. Fixed with a narrow keyphase-anchored measurement, a per-window resolvability passport and a *measured* masker; two low-speed method limits documented (one with the masker measured, one an open question); a candidate ~16.5 Hz **axial** rig mode flagged for the misalignment episode. Both wrong runs are preserved in the repo | [imbalance report §3–6](docs/imbalance_report.md) |
 
 ---
 
@@ -56,11 +58,13 @@ from Mendeley and place the files as described in each section's README.
 ## Repository map
 
 ```
-├── 01_health/        ✅ healthy baseline + rig resonance check      (scripts, README, outputs)
-├── 02_broken_bar/    ✅ broken rotor bar via MCSA, pure class       (scripts, README, outputs)
-├── 03_...            ⏳ unbalance, misalignment, bearings — see the roadmap
-├── common/           shared analysis module (health_baseline.py)
-└── docs/             full written reports, per-file catalogs, series roadmap
+├── 01_health/            ✅ healthy baseline + rig resonance check      (scripts, README, outputs)
+├── 02_broken_bar/        ✅ broken rotor bar via MCSA, pure class       (scripts, README, outputs)
+├── 03_rotor_unbalance/   ✅ imbalance via vibration 1×: the ω² law,
+│                            the 2-pole trap, two low-speed limits       (scripts, README, outputs)
+├── 04_...                ⏳ misalignment & bend, bearings — see the roadmap
+├── common/               shared analysis module (health_baseline.py)
+└── docs/                 full written reports, per-file catalogs, series roadmap
 ```
 
 Each numbered section is **self-contained**: its own README (data layout, how to run,
@@ -69,6 +73,8 @@ outputs explained), its own scripts, and a copy of the shared module so it runs 
 - 📘 [Series roadmap](docs/series_roadmap.md) — the full episode plan and what each block closes
 - 📗 [Health & resonance report](docs/health_resonance_report.md)
 - 📕 [Broken-bar report](docs/broken_bar_report.md) — physics, method, all 12 files, both limits
+- 📙 [Imbalance report](docs/imbalance_report.md) — the ω² law, the 2-pole trap in three runs, two low-speed limits
+- 📒 [Imbalance catalog](docs/imbalance_catalog.md) — metrics, the resolvability passport, exclusion classes
 
 ---
 
@@ -85,9 +91,14 @@ outputs explained), its own scripts, and a copy of the shared module so it runs 
 5. **Self-sufficient indicators over calibrated ones.** If a threshold needs a healthy
    background that doesn't reproduce between rig protocols, the threshold — not the data —
    is the problem.
-6. **Errors stay in the record.** Example: file-name numbers were initially misread as the
-   plateau load (they are the sweep peak); the misinterpretation and the rollback are
-   documented in the catalogs. The process is part of the result.
+6. **Errors stay in the record.** Two lived examples: file-name numbers misread as the
+   plateau load (E1, rolled back and documented in the catalogs), and the 2-pole trap —
+   a wide peak search returning the EM f1 line as the mechanical 1× (E3; both wrong runs
+   preserved in `03_rotor_unbalance/outputs`, dissected in the report). The process is
+   part of the result.
+7. **Measure the masker.** When a neighbouring line can contaminate an indicator, its
+   amplitude is recorded next to the indicator in every window — exclusion decisions are
+   made on measurements, not on geometry.
 
 ---
 
@@ -114,8 +125,8 @@ python resonance_check.py      # two-test resonance verdict
 |---|---|---|
 | 1 | Health baseline + rig resonance | ✅ done |
 | 2 | Broken rotor bar (MCSA), self-sufficient SNR indicator | ✅ pure class done |
-| 3 | Rotor unbalance (ω² law with correct resonance handling) | ⏳ next |
-| 4 | Misalignment & shaft bend (separating the 1× family) | planned |
+| 3 | Rotor unbalance (ω² law, the 2-pole trap, low-speed limits) | ✅ done |
+| 4 | Misalignment & shaft bend (separating the 1× family; needs the ~16.5 Hz axial-mode verdict first) | ⏳ next |
 | 5–6 | Bearings: envelope analysis, raceway faults | planned |
 | 7+ | Compound faults, severity axes, streaming engine, hardware (STM32) | planned |
 
