@@ -103,7 +103,7 @@ their own folder, e.g.:
 ```bash
 cd 01_health/scripts
 python health_baseline.py      # baseline table + validation figure + sanity report
-python resonanse_check.py      # two-test resonance verdict
+python resonance_check.py      # two-test resonance verdict
 ```
 
 ---
