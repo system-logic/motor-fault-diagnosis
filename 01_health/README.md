@@ -28,14 +28,14 @@ test rig near 50 Hz**, a finding that shapes how vibration is interpreted later.
 ├── scripts/
 │   ├── health_baseline.py    ← core module + baseline builder (imported by the others)
 │   ├── health_visualize.py   ← per-file 6-panel diagnostic sheets
-│   └── resonanse_check.py    ← rig resonance hypothesis test
+│   └── resonance_check.py    ← rig resonance hypothesis test
 ├── outputs/                  ← generated CSV/PNG go here (see "How to run")
 └── data/                     ← health CSVs (not in the repo — see repository root README)
 ```
 
 > **Dependency note.** `health_baseline.py` is not only a runnable script — it is the
 > shared **module** that the other two import (`import health_baseline as hb`).
-> It must sit **next to** `health_visualize.py` and `resonanse_check.py` when they run.
+> It must sit **next to** `health_visualize.py` and `resonance_check.py` when they run.
 
 ---
 
@@ -75,7 +75,7 @@ healthy-class CSVs so the scripts can find them (they search their own folder
 01_health/scripts/
 ├── health_baseline.py
 ├── health_visualize.py
-├── resonanse_check.py
+├── resonance_check.py
 ├── speed_circulation/
 │   └── health_speed_circulation_*Nm_*rpm_*.csv
 └── torque_circulation/
@@ -112,7 +112,7 @@ python health_visualize.py
 python health_visualize.py 3000        # only files whose name contains "3000"
 
 # 3) Rig resonance test (two figures + a printed verdict)
-python resonanse_check.py
+python resonance_check.py
 ```
 
 Generated files appear **next to the script**. Move them into `outputs/` afterwards
@@ -143,7 +143,7 @@ to keep the repo tidy (the scripts do not write into `outputs/` automatically).
   (broken-bar and imbalance band zones), (6) vibration c3 spectrum with 1×/2×/3×
   and the 50 Hz resonance line.
 
-### `resonanse_check.py`
+### `resonance_check.py`
 - **`resonance_c3_spectra_overlay.png`** — c3 spectra from all speeds overlaid; a
   **fixed** peak near 50 Hz (separate from the moving 1×) indicates a resonance.
 - **`resonance_transmissibility.png`** — 1× vs rotation frequency (log-log) with a
