@@ -7,9 +7,13 @@ specific questions. The threads the logic follows:
   bearings). We move from simple single-channel analysis to multi-channel.
 - **Tooling:** direct plateau spectrum → envelope / demodulation (bearings) →
   multi-class streaming engine.
-- **Open threads left by health**, picked up first:
-  (1) cross-protocol broken-bar floor → self-sufficient SNR indicator;
-  (2) ~50 Hz resonance → exclude 3000 rpm from the ω² law.
+- **Open threads left by health** — both now closed:
+  (1) cross-protocol broken-bar floor → self-sufficient SNR indicator (closed in E2);
+  (2) ~50 Hz resonance → the ω² law with correct resonance handling (closed in E3).
+- **New threads opened along the way** (tracked at the episodes that own them):
+  the 2-pole f1↔fr trap and its resolvability passport (E3 → inherited by E4 at 2×);
+  the candidate ~16.5 Hz axial rig mode (E3 → must be confirmed before E4);
+  the unexplained low-speed 1× excess at 478 rpm / 40 Nm (E3, open).
 
 Notation: `[folders]` = dataset classes; H/L = available severity axis.
 
@@ -49,23 +53,49 @@ composites.
 
 ═══════════════════════════════════════════════════════════════════════
 
-## Episode 3 — Rotor mechanics I: imbalance
-Investigations: imbalance (pure) · the ω² law · load-independence control.
-- Grows from: the vibration axes (c3 radial, c4 axial) and the resonance (E1).
-- Channel/tool: VIBRATION, 1× amplitude (flat-top window), per-regime normalisation.
-- What we show: the imbalance 1× grows as ω²; the law is built from speeds ≤2500 plus
-  the intermediate plateaus, the 3000 rpm POINT is EXCLUDED (resonantly inflated) but
-  used as the zone of maximum sensitivity. Control: under torque (load sweep) the 1×
-  barely changes → it is the rotor, not the load.
+## Episode 3 — Rotor mechanics I: imbalance  ✅ DONE
+Investigations: imbalance (pure) · the ω² law · load-independence control ·
+**the 2-pole trap** (found here, not planned).
+- Grows from: the vibration axes (c3 radial, c4 axial) and the resonance (E1);
+  the self-sufficient SNR (E2), reused unchanged for the 1×.
+- Channel/tool: VIBRATION, 1× amplitude (flat-top, **narrow ±1-bin search at fr from
+  the keyphase** — see the trap below), R1x = √(1×c2² + 1×c3²).
+- Shown: **the ω² law holds — n = 2.11, R² = 0.981** over 12 plateaus (16–41 Hz),
+  both loads on one line; load-independence control CoV 0.8–6.8 % per torque file;
+  the 50 Hz resonance inflates the fault 1× **×4.7–5.5** over the law and yields the
+  largest health ratios (2.8) — excluded from the law, kept as the max-sensitivity
+  zone; detection vs healthy ×1.3–1.9 at working regimes (threshold pending the
+  healthy-spread task below).
 - Closes: (2) the ω² law with correct resonance handling; imbalance vs healthy.
-- Severity axis: NONE (no severity label) → speed axis only.
+- **Found here (took three runs; runs 1–2 preserved in the section's
+  `outputs/1_Trap results` and `2_Trap results`; full story in
+  `docs/imbalance_report.md`):**
+  · **the 2-pole trap** — on a 2-pole machine the EM f1 line sits only s·f1 from the
+    mechanical 1×; a wide ±4-bin peak search returned the EM line as "the 1×" and bent
+    the exponent to 0.96; a bin-distance filter then failed in both directions; final
+    method = narrow measurement + merged-lines exclusion (sep < 3 bins) + the masker
+    **measured per window** (`vib_f1_line`) + a printed twin-check (final: 1.009);
+  · **two low-speed limits at ~8 Hz, distinct mechanisms** — 20 Nm: lines physically
+    merged (masker measured at 2.7·10⁻⁴); 40 Nm: a ×10 off-law excess at fr itself
+    with the f1 line quiet — **mechanism unidentified, open**. Mirrors the E2 477 rpm
+    MCSA limit: the same low-speed corner is blind for both methods;
+  · **candidate axial rig mode ~16.5 Hz** — axial 1× spikes ×8–10 over radial at
+    fr ≈ 16.2–16.5 Hz, both loads, and in the *healthy* data too → rig, not fault.
+    **Must be confirmed by the E1-style fixed-peak test BEFORE Episode 4**;
+  · the `f1_in_2x` guard prepared for E4 (the same trap at 2f1 vs 2×fr).
+- Open tasks owned by this episode: the healthy 1× spread (to turn ×1.3–1.9 into a
+  defensible threshold); the 478 rpm / 40 Nm excess mechanism.
+- Severity axis: NONE (no severity label) → speed and load axes only.
 - `[Rotor_Unbalance]`  →  folder `03_rotor_unbalance`
 
 ═══════════════════════════════════════════════════════════════════════
 
 ## Episode 4 — Rotor mechanics II: misalignment and bend
 Investigations: misalignment · shaft bend · separating the 1× family.
-- Grows from: imbalance as the 1× reference (E3).
+- Grows from: imbalance as the 1× reference (E3); **prerequisites inherited from E3:**
+  confirm/refute the ~16.5 Hz axial rig mode on health data (misalignment lives in the
+  axial channel — without this check the axial control at ~1000 rpm is unusable), and
+  apply the `f1_in_2x` guard (the 2-pole trap repeats at 2f1 vs 2×fr).
 - Channel/tool: VIBRATION, 1× + 2× + 3×, the axial axis (c4).
 - What we show: misalignment gives a strong 2× and a noticeable AXIAL vibration; bend
   gives 1× + 2× with its own ratio. Key idea: imbalance, misalignment and bend ALL
@@ -160,6 +190,8 @@ Investigations: multi-class engine · streaming states and trend logic · early 
 - E8 needs ALL singles (E2–E7): superposition and the matrix cannot be built without them.
 - The misalignment inner/outer anomaly in E8 needs the envelope tool from E5.
 - E9 needs the matrix from E8.
+- **E4 additionally needs two E3 deliverables:** the ~16.5 Hz axial-mode verdict on
+  health data, and the `f1_in_2x` resolvability guard.
 
 ## Possible reordering (optional)
 The stator block (E7) is electrical and independent of mechanics/bearings; it could be
