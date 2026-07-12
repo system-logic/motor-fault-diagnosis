@@ -1,0 +1,22 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Raw dataset CSVs (~100 MB each) — placed next to the scripts locally, never committed.
+# Outputs CSVs (imbalance_windows.csv etc.) live under outputs/ and are NOT ignored.
+0*/scripts/speed_circulation/
+0*/scripts/torque_circulation/
+0*/scripts/*.csv
+
+# Virtual environments
+.venv/
+venv/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
