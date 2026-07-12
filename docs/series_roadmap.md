@@ -18,8 +18,7 @@ specific questions. The threads the logic follows:
 Notation: `[folders]` = dataset classes; H/L = available severity axis.
 
 **Repository mapping.** Episodes map to the numbered section folders
-(`01_health`, `02_broken_bar`, …). The exact folder/file layout of the repo lives in
-`docs/tree.txt`.
+(`01_health`, `02_broken_bar`, …). The dataset's class/file layout lives in docs/dataset_tree.txt.
 
 ═══════════════════════════════════════════════════════════════════════
 
