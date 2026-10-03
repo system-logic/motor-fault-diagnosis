@@ -1,24 +1,29 @@
 """
-resonance_check.py — проверка гипотезы РЕЗОНАНСА стенда около 50 Гц / 3000 об/мин.
+resonance_check.py — test of the RIG RESONANCE hypothesis near 50 Hz / 3000 rpm.
 
-Контекст: в health-базе 1× вибрации на оси c3 подскочил на 3000 об/мин заметно
-сильнее закона ω² (≈×30 на удвоение скорости вместо ×4). Две гипотезы:
-  H1 — механический резонанс конструкции у ~50 Гц (усиливает 1×, когда fr туда въезжает);
-  H2 — просто степенной рост 1× дисбаланса, без резонанса.
+Context: in the health baseline the vibration 1x on axis c3 jumps at 3000 rpm far
+more than the omega^2 law allows (~x30 for a doubling of speed instead of x4). Two
+hypotheses:
+  H1 — a mechanical resonance of the structure near ~50 Hz (amplifies 1x when fr
+       sweeps into it);
+  H2 — plain power-law growth of the imbalance 1x, no resonance.
 
-РЕШАЮЩИЙ ТЕСТ: резонанс сидит на ФИКСИРОВАННОЙ частоте независимо от оборотов,
-а 1× едет с частотой вращения. Промежуточные полки speed-протокола ставят 1× на
-24–41 Гц (в стороне от 50). Если на них в спектре c3 есть НЕПОДВИЖНЫЙ пик у ~50 Гц
-(отдельно от 1×), а на 3000 об/мин 1× в него въезжает и раздувается — это H1.
+DECISIVE TEST: a resonance sits at a FIXED frequency regardless of speed, while the 1x
+moves with the rotation frequency. The intermediate plateaus of the speed protocol put
+the 1x at 24–41 Hz (away from 50). If on those plateaus the c3 spectrum shows a
+STATIONARY peak near ~50 Hz (separate from the 1x), and at 3000 rpm the 1x drives into
+it and balloons — that is H1.
 
-Запуск из этой папки: python resonance_check.py
-  данные: ../data/**/health_*.csv;  модуль: ../../common/health_baseline.py;  выход: ../outputs/
+Run from this folder:  python resonance_check.py
+  data:    ../data/**/health_*.csv
+  module:  ../../common/health_baseline.py
+  output:  ../outputs/
 
-Выход:
-  resonance_c3_spectra_overlay.png  — наложение спектров c3 с разных скоростей
-  resonance_transmissibility.png    — 1× vs fr (log-log) + эталон ω², и 1x/fr²
-  консоль — вердикт: есть ли фиксированный пик у 50 Гц и во сколько раз 3000
-            превышает степенную экстраполяцию.
+Outputs:
+  resonance_c3_spectra_overlay.png  — c3 spectra from all speeds overlaid
+  resonance_transmissibility.png    — 1x vs fr (log-log) + omega^2 reference, and 1x/fr^2
+  console — the verdict: is there a fixed peak near 50 Hz, and by how much does the
+            3000 rpm point exceed the power-law extrapolation.
 """
 import os, sys, glob, re
 import numpy as np
@@ -28,7 +33,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SECTION_DIR = os.path.dirname(SCRIPT_DIR)                 # e.g. 02_broken_bar/
+SECTION_DIR = os.path.dirname(SCRIPT_DIR)                 # 01_health/
 REPO_ROOT = os.path.dirname(SECTION_DIR)
 sys.path.insert(0, os.path.join(REPO_ROOT, "common"))     # the single shared module
 import health_baseline as hb
@@ -37,10 +42,10 @@ OUT_DIR = os.path.join(SECTION_DIR, "outputs")            # everything this scri
 os.makedirs(OUT_DIR, exist_ok=True)
 FS = hb.FS
 
-RES_BAND = (40.0, 60.0)     # где ищем фиксированный пик резонанса, Гц
-FIXED_TOL = 3.0             # разброс положения «фиксированного» пика между полками, Гц
+RES_BAND = (40.0, 60.0)     # where the fixed resonance peak is searched, Hz
+FIXED_TOL = 3.0             # allowed spread of the "fixed" peak position between plateaus, Hz
 
-# --- линейный спектр вибрации (Ханнинг, односторонний) ---
+# --- linear vibration spectrum (Hann window, one-sided) ---
 def vib_spectrum(sig):
     w = np.hanning(len(sig)); x = (sig - sig.mean()) * w
     sp = np.abs(np.fft.rfft(x)) * 2.0 / np.sum(w)
@@ -61,10 +66,10 @@ def peak_in_band(f, sp, lo, hi, exclude_fc=None, exclude_half=2.5):
     return f[k], sp[k]
 
 def collect_plateaus():
-    """Все полки всех health-файлов -> список (rpm, fr, срез сигнала X, каналы)."""
+    """All plateaus of all health files -> list of (rpm, fr, signal slice X, channels)."""
     files = hb.collect_health_files(DATA_DIR)
     if not files:
-        print("Health-файлы не найдены в", DATA_DIR); sys.exit(1)
+        print("No health files found under", DATA_DIR); sys.exit(1)
     out = []
     ref_vib = None
     for p in files:
@@ -80,7 +85,7 @@ def collect_plateaus():
     return out, ref_vib
 
 def pick_primary_radial(plats, vib_idx):
-    """Ось с наибольшим ростом 1× к высокой скорости = главная радиальная (c3)."""
+    """The axis whose 1x grows most towards high speed = the main radial axis (c3)."""
     hi = max(plats, key=lambda d: d["rpm"])
     amps = []
     for ci in vib_idx:
@@ -93,112 +98,112 @@ def main():
     plats, vib_idx = collect_plateaus()
     prim, prim_pos, amps_hi = pick_primary_radial(plats, vib_idx)
     labels = ["c2", "c3", "c4"]
-    print(f"Каналы вибрации (столбцы): {vib_idx} -> {labels}")
-    print(f"Главная радиальная ось (макс. 1× на высокой скорости): столбец {prim} = {labels[prim_pos]}")
-    print(f"  1× на верхней полке по осям: " +
+    print(f"Vibration channels (columns): {vib_idx} -> {labels}")
+    print(f"Main radial axis (max 1x at the highest speed): column {prim} = {labels[prim_pos]}")
+    print(f"  1x on the top plateau per axis: " +
           ", ".join(f"{labels[i]}={a:.5f}" for i, a in enumerate(amps_hi)))
 
     plats = sorted(plats, key=lambda d: d["rpm"])
 
-    # ---------- ТЕСТ 1: фиксированный пик у 50 Гц на нерезонансных полках ----------
-    print("\n=== Тест 1: неподвижный пик в полосе 40–60 Гц (вне зоны 1×) ===")
-    print(f"  {'rpm':>6} {'fr(1×),Гц':>10} {'пик≠1× в 40-60,Гц':>18} {'ампл':>10}")
+    # ---------- TEST 1: a fixed peak near 50 Hz on the non-resonant plateaus ----------
+    print("\n=== Test 1: stationary peak in the 40–60 Hz band (outside the 1x zone) ===")
+    print(f"  {'rpm':>6} {'fr(1x),Hz':>10} {'peak!=1x in 40-60,Hz':>21} {'ampl':>10}")
     fixed_hits = []
     for d in plats:
         f, sp = vib_spectrum(d["seg"][:, prim])
         fc, a = peak_in_band(f, sp, *RES_BAND, exclude_fc=d["fr"])
-        # интересны полки, где 1× НЕ в полосе резонанса (fr вне 40-60 ± tol)
+        # of interest: plateaus where the 1x is NOT inside the resonance band (fr outside 40-60 +/- tol)
         off = not (RES_BAND[0] - 3 <= d["fr"] <= RES_BAND[1] + 3)
         mark = ""
         if off and not np.isnan(fc):
-            fixed_hits.append(fc); mark = "  <- фиксированный?"
-        print(f"  {d['rpm']:6.0f} {d['fr']:10.1f} {fc:18.1f} {a:10.5f}{mark}")
+            fixed_hits.append(fc); mark = "  <- fixed?"
+        print(f"  {d['rpm']:6.0f} {d['fr']:10.1f} {fc:21.1f} {a:10.5f}{mark}")
     if len(fixed_hits) >= 2:
         med = np.median(fixed_hits); spread = np.ptp(fixed_hits)
         verdict1 = (spread <= FIXED_TOL)
-        print(f"  фиксированный пик: медиана {med:.1f} Гц, разброс {spread:.1f} Гц "
-              f"-> {'ПОДТВЕРЖДАЕТ резонанс' if verdict1 else 'положение плывёт (не фиксирован)'}")
+        print(f"  fixed peak: median {med:.1f} Hz, spread {spread:.1f} Hz "
+              f"-> {'CONFIRMS a resonance' if verdict1 else 'position drifts (not fixed)'}")
     else:
         verdict1 = None
-        print("  недостаточно нерезонансных полок для вывода")
+        print("  not enough non-resonant plateaus for a conclusion")
 
-    # ---------- ТЕСТ 2: 1× vs fr, отклонение от ω² ----------
-    print("\n=== Тест 2: усиление 1× относительно закона ω² ===")
+    # ---------- TEST 2: 1x vs fr, deviation from omega^2 ----------
+    print("\n=== Test 2: amplification of the 1x relative to the omega^2 law ===")
     fr = np.array([d["fr"] for d in plats])
     a1 = np.array([amp_at(*vib_spectrum(d["seg"][:, prim]), d["fr"]) for d in plats])
-    # опорный степенной закон по НИЖНИМ скоростям (fr < 40 Гц, до резонанса)
+    # reference power law fitted on the LOW speeds (fr < 40 Hz, below the resonance)
     lo = fr < 40
     if lo.sum() >= 3:
         cflog = np.polyfit(np.log(fr[lo]), np.log(a1[lo] + 1e-12), 1)
         slope = cflog[0]
         pred_hi = np.exp(np.polyval(cflog, np.log(fr)))
         amp_factor = a1 / (pred_hi + 1e-12)
-        print(f"  степенной наклон по нижним скоростям: {slope:.2f} (ω² дал бы 2.0)")
-        print(f"  {'rpm':>6} {'fr':>6} {'1×изм':>9} {'1×закон':>9} {'превышение×':>11}")
+        print(f"  power-law slope on the low speeds: {slope:.2f} (omega^2 would give 2.0)")
+        print(f"  {'rpm':>6} {'fr':>6} {'1x meas':>9} {'1x law':>9} {'excess x':>11}")
         for i in range(len(fr)):
             tag = "  <-" if amp_factor[i] > 2 else ""
             print(f"  {fr[i]*60:6.0f} {fr[i]:6.1f} {a1[i]:9.5f} {pred_hi[i]:9.5f} {amp_factor[i]:11.1f}{tag}")
         peak_factor = amp_factor.max(); peak_rpm = fr[np.argmax(amp_factor)] * 60
         verdict2 = peak_factor > 3
-        print(f"  макс. превышение закона: ×{peak_factor:.1f} на {peak_rpm:.0f} об/мин "
-              f"-> {'резонансное усиление' if verdict2 else 'в пределах степенного роста'}")
+        print(f"  max excess over the law: x{peak_factor:.1f} at {peak_rpm:.0f} rpm "
+              f"-> {'resonant amplification' if verdict2 else 'within power-law growth'}")
     else:
         verdict2 = None; amp_factor = None
-        print("  мало точек ниже 40 Гц для опорного закона")
+        print("  too few points below 40 Hz for a reference law")
 
-    # ---------- Графики ----------
-    # (1) наложение спектров c3
+    # ---------- Figures ----------
+    # (1) c3 spectra overlay
     fig, ax = plt.subplots(figsize=(13, 7))
     cmap = plt.cm.viridis(np.linspace(0, 1, len(plats)))
     for d, c in zip(plats, cmap):
         f, sp = vib_spectrum(d["seg"][:, prim])
         m = f <= 160
         ax.semilogy(f[m], sp[m] + 1e-9, lw=0.8, color=c, alpha=0.8,
-                    label=f"{d['rpm']:.0f} об/мин (1×={d['fr']:.0f})")
+                    label=f"{d['rpm']:.0f} rpm (1x={d['fr']:.0f})")
         ax.plot(d["fr"], amp_at(f, sp, d["fr"]) + 1e-9, "o", color=c, ms=5, mec="k", mew=0.4)
     ax.axvspan(RES_BAND[0], RES_BAND[1], color="red", alpha=0.08)
-    ax.axvline(50, color="red", ls="--", lw=1, label="подозрение на резонанс ~50 Гц")
-    ax.set(xlabel="частота, Гц", ylabel=f"амплитуда {labels[prim_pos]} (отн.)",
-           title="Наложение спектров вибрации c3 по скоростям\n"
-                 "кружок = 1× каждой полки; ищем НЕПОДВИЖНЫЙ пик у 50 Гц")
+    ax.axvline(50, color="red", ls="--", lw=1, label="suspected resonance ~50 Hz")
+    ax.set(xlabel="frequency, Hz", ylabel=f"amplitude {labels[prim_pos]} (rel.)",
+           title="Vibration spectra of c3 overlaid across speeds\n"
+                 "circle = the 1x of each plateau; looking for a STATIONARY peak near 50 Hz")
     ax.legend(fontsize=7, ncol=2); ax.grid(True, which="both", alpha=0.3)
     plt.tight_layout(); p1 = os.path.join(OUT_DIR, "resonance_c3_spectra_overlay.png")
-    plt.savefig(p1, dpi=120); print("\nГрафик:", p1)
+    plt.savefig(p1, dpi=120); print("\nFigure:", p1)
 
-    # (2) транссмиссивность
+    # (2) transmissibility
     fig, ax = plt.subplots(1, 2, figsize=(14, 5.5))
-    ax[0].loglog(fr, a1 + 1e-12, "o", ms=6, mec="k", mew=0.4, label="1× изм.")
+    ax[0].loglog(fr, a1 + 1e-12, "o", ms=6, mec="k", mew=0.4, label="1x measured")
     if lo.sum() >= 3:
         order = np.argsort(fr)
-        ax[0].loglog(fr[order], pred_hi[order], "r--", lw=1, label=f"степень×{slope:.1f}")
-        ax[0].loglog(fr[order], (a1[lo][0]*(fr/fr[lo][0])**2)[order], "g:", lw=1, label="эталон ω²")
-    ax[0].set(xlabel="fr, Гц", ylabel="1× амплитуда", title="1× vs частота вращения (log-log)")
+        ax[0].loglog(fr[order], pred_hi[order], "r--", lw=1, label=f"power law x{slope:.1f}")
+        ax[0].loglog(fr[order], (a1[lo][0]*(fr/fr[lo][0])**2)[order], "g:", lw=1, label="omega^2 reference")
+    ax[0].set(xlabel="fr, Hz", ylabel="1x amplitude", title="1x vs rotation frequency (log-log)")
     ax[0].legend(fontsize=8); ax[0].grid(True, which="both", alpha=0.3)
-    comp = a1 / (fr ** 2 + 1e-12)      # податливость ~ пик у резонанса
+    comp = a1 / (fr ** 2 + 1e-12)      # compliance ~ peaks at the resonance
     ax[1].plot(fr, comp / np.nanmedian(comp), "o-", ms=5)
     ax[1].axvline(50, color="red", ls="--", lw=1)
-    ax[1].set(xlabel="fr, Гц", ylabel="1×/fr² (норм.)",
-              title="Механическая податливость 1×/fr² (пик = резонанс)")
+    ax[1].set(xlabel="fr, Hz", ylabel="1x/fr^2 (normalised)",
+              title="Mechanical compliance 1x/fr^2 (peak = resonance)")
     ax[1].grid(True, alpha=0.3)
     plt.tight_layout(); p2 = os.path.join(OUT_DIR, "resonance_transmissibility.png")
-    plt.savefig(p2, dpi=120); print("График:", p2)
+    plt.savefig(p2, dpi=120); print("Figure:", p2)
 
-    # ---------- Вердикт ----------
+    # ---------- Verdict ----------
     print("\n" + "=" * 60)
-    print("ВЕРДИКТ:")
+    print("VERDICT:")
     v = []
-    if verdict1 is True: v.append("фиксированный пик у ~50 Гц ЕСТЬ")
-    elif verdict1 is False: v.append("фиксированного пика НЕТ")
-    if verdict2 is True: v.append("1× превышает ω² в разы у 3000")
-    elif verdict2 is False: v.append("рост 1× в пределах степенного")
-    print("  " + "; ".join(v) if v else "  недостаточно данных")
+    if verdict1 is True: v.append("a fixed peak near ~50 Hz IS present")
+    elif verdict1 is False: v.append("NO fixed peak")
+    if verdict2 is True: v.append("the 1x exceeds omega^2 several-fold near 3000")
+    elif verdict2 is False: v.append("1x growth stays within the power law")
+    print("  " + "; ".join(v) if v else "  not enough data")
     if verdict1 and verdict2:
-        print("  => РЕЗОНАНС стенда у ~50 Гц ПОДТВЕРЖДЁН. На 3000 об/мин строить")
-        print("     закон 'подъём 1× от скорости' нельзя — точка резонансно раздута.")
+        print("  => RIG RESONANCE near ~50 Hz CONFIRMED. The 3000 rpm point cannot be used")
+        print("     for a '1x rise vs speed' law — it is resonantly inflated.")
     elif verdict1 is False and verdict2 is False:
-        print("  => Резонанс НЕ подтверждён; всплеск на 3000 нуждается в другом объяснении.")
+        print("  => Resonance NOT confirmed; the jump at 3000 needs another explanation.")
     else:
-        print("  => Картина смешанная, см. графики (возможно резонанс на краю диапазона).")
+        print("  => Mixed picture, see the figures (possibly a resonance at the edge of the range).")
 
 if __name__ == "__main__":
     main()
