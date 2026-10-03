@@ -28,19 +28,20 @@ see §7 and `docs/imbalance_report.md`).
 ├── README.md                    ← this file
 ├── scripts/
 │   ├── imbalance_analyze.py     ← per-window analysis, tables, summary figures
-│   ├── imbalance_visualize.py   ← per-file 6-panel diagnostic sheets
-│   └── health_baseline.py       ← shared module (copy of the one from 01_health)
-├── outputs/                     ← generated CSV/PNG (final run)
-│   ├── 1_Trap results/          ← run 1 (the trap), preserved
-│   └── 2_Trap results/          ← run 2 (the half-fix), preserved
-└── data/                        ← Rotor_Unbalance CSVs (not in the repo — see root README)
+│   └── imbalance_visualize.py   ← per-file 6-panel diagnostic sheets
+├── outputs/                     ← final run (CSV/PNG, committed)
+│   ├── run1_trap/               ← run 1 (the trap), preserved: every figure differs from the final run
+│   └── run2_trap/               ← run 2 (the half-fix), preserved: only the figures that differ from the final run
+└── data/                        ← Rotor_Unbalance CSVs go here (not in the repo — see below)
 ```
 
-> **Two dependencies to keep next to the scripts:**
-> 1. **`health_baseline.py`** — the shared module (`import health_baseline as hb`).
-> 2. **`health_baseline_plateaus.csv`** — the healthy 1× reference from `01_health`
->    for the `r1x_over_health` ratio. Auto-searched in the script folder and nearby
->    parents; without it the ratio is skipped, everything else works.
+> **Two dependencies, both resolved from the repository layout:**
+> 1. **`common/health_baseline.py`** — the shared module (`import health_baseline as hb`),
+>    located from the script's own path.
+> 2. **`01_health/outputs/health_baseline_plateaus.csv`** — the healthy 1× reference
+>    for the `r1x_over_health` ratio (fallback: a search under `data/` and nearby
+>    folders, or an explicit `HEALTH_CSV`). Without it the ratio is skipped, everything
+>    else works.
 
 ---
 
@@ -78,20 +79,18 @@ from the keyphase). The masker itself is **measured** per window (`vib_f1_line`,
 ### Protocols, channels, data layout
 
 Same as `01_health` / `02_broken_bar`: two protocols, channels identified by signal
-shape, no torque channel, slip = load proxy. Data placement (scripts search their own
-folder recursively; files matched by `…Nm…rpm…` in the name):
+shape, no torque channel, slip = load proxy. Data placement: this section's **`data/`**
+folder, searched recursively (git-ignored); files matched by `…Nm…rpm…` in the name:
 
 ```
-03_rotor_unbalance/scripts/
-├── imbalance_analyze.py
-├── imbalance_visualize.py
-├── health_baseline.py
-├── health_baseline_plateaus.csv        ← copy from 01_health (for the health ratio)
+03_rotor_unbalance/data/
 ├── speed_circulation/
 │   └── Rotor_unbalance_speed_circulation_*Nm_*rpm_*.csv
 └── torque_circulation/
     └── Rotor_unbalance_torque_circulation_*Nm_*rpm_*.csv
 ```
+
+On Windows: `mklink /J 03_rotor_unbalance\data "<dataset>\Rotor_Unbalance"`.
 
 ---
 
@@ -103,6 +102,8 @@ Python 3.9+; `numpy`, `pandas`, `scipy`, `matplotlib` (see root `requirements.tx
 
 ## 5. How to run
 
+Run from `03_rotor_unbalance/scripts/`:
+
 ```bash
 # 1) Per-window analysis: tables + summary figures + console report
 python imbalance_analyze.py
@@ -112,7 +113,7 @@ python imbalance_visualize.py
 python imbalance_visualize.py 3000
 ```
 
-Generated files appear next to the script; move them into `outputs/` afterwards.
+All generated files go to **`03_rotor_unbalance/outputs/`**.
 
 ### Configuration (top of `imbalance_analyze.py`)
 
@@ -163,8 +164,8 @@ Generated files appear next to the script; move them into `outputs/` afterwards.
 - **The 2-pole trap, documented:** a wide ±4-bin peak search returned the EM f1 line as
   "the 1×" (run 1, exponent bent to 0.96); a bin-distance filter then failed in both
   directions (run 2). Final rule: narrow measurement + merged-lines exclusion + measured
-  masker. Full story: `docs/imbalance_report.md`, artifacts in `outputs/1_Trap results`
-  and `2_Trap results`.
+  masker. Full story: `docs/imbalance_report.md`, artifacts in `outputs/run1_trap`
+  and `outputs/run2_trap`.
 - **Two distinct low-speed limits at ~8 Hz:** at 20 Nm the EM line and the 1× are
   physically merged (masker measured); at 40 Nm the lines are separable, the f1 line is
   quiet, yet the 1× carries a ×10 off-law excess — **mechanism unidentified, open

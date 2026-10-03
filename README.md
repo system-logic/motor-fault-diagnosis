@@ -58,17 +58,31 @@ from Mendeley and place the files as described in each section's README.
 ## Repository map
 
 ```
-├── 01_health/            ✅ healthy baseline + rig resonance check      (scripts, README, outputs)
-├── 02_broken_bar/        ✅ broken rotor bar via MCSA, pure class       (scripts, README, outputs)
-├── 03_rotor_unbalance/   ✅ imbalance via vibration 1×: the ω² law,
-│                            the 2-pole trap, two low-speed limits       (scripts, README, outputs)
+├── common/
+│   └── health_baseline.py    the single shared analysis module: channel identification,
+│                             plateaus, f1/slip, spectra, the healthy-baseline builder
+├── 01_health/            ✅ healthy baseline + rig resonance check
+├── 02_broken_bar/        ✅ broken rotor bar via MCSA, pure class
+├── 03_rotor_unbalance/   ✅ imbalance via vibration 1×: the ω² law, the 2-pole trap,
+│                            two low-speed limits (wrong runs kept in outputs/run1_trap, run2_trap)
 ├── 04_...                ⏳ misalignment & bend, bearings — see the roadmap
-├── common/               shared analysis module (health_baseline.py)
-└── docs/                 full written reports, per-file catalogs, series roadmap
+├── docs/                 full written reports, per-file catalogs, series roadmap
+└── requirements.txt
 ```
 
-Each numbered section is **self-contained**: its own README (data layout, how to run,
-outputs explained), its own scripts, and a copy of the shared module so it runs standalone.
+Every numbered section has the same shape:
+
+```
+0N_section/
+├── README.md     what it produces, the physics, data layout, how to run, outputs explained
+├── scripts/      the analysis scripts; they import common/health_baseline.py by a path
+│                 computed from their own location — nothing is copied between sections
+├── data/         the raw CSVs of that class go here (git-ignored, never committed)
+└── outputs/      everything the scripts write: tables (CSV) and figures (PNG), committed
+```
+
+Sections 02 and 03 read the healthy reference table from
+`01_health/outputs/health_baseline_plateaus.csv`.
 
 - 📘 [Series roadmap](docs/series_roadmap.md) — the full episode plan and what each block closes
 - 📗 [Health & resonance report](docs/health_resonance_report.md)
@@ -105,17 +119,23 @@ outputs explained), its own scripts, and a copy of the shared module so it runs 
 ## How to run
 
 ```bash
-pip install numpy pandas scipy matplotlib   # Python 3.9+
+pip install -r requirements.txt            # numpy, pandas, scipy, matplotlib; Python 3.9+
 ```
 
-Then follow the README inside each section — scripts auto-locate their data and run from
-their own folder, e.g.:
+Put the dataset's class folders under `0N_section/data/` (or create directory junctions
+to the unpacked dataset, see each section's README), then run the scripts from their
+own folder — all paths are derived from the script's location:
 
 ```bash
 cd 01_health/scripts
-python health_baseline.py      # baseline table + validation figure + sanity report
+python build_baseline.py       # baseline table + validation figure + sanity report
 python resonance_check.py      # two-test resonance verdict
+cd ../../02_broken_bar/scripts
+python broken_bar_analyze.py   # sideband tables + summary figures (needs the baseline table)
 ```
+
+Results land in the section's `outputs/` and are committed, so every number in the
+reports can be traced to a file in the repo.
 
 ---
 

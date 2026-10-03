@@ -33,8 +33,8 @@ Carried over from `01_health` / `02_broken_bar` as-is:
 
 ## 0-bis. Three runs, two preserved mistakes (the 2-pole trap)
 
-This block took three iterations; runs 1–2 are archived (`1_Trap results`,
-`2_Trap results`) and analysed in `docs/imbalance_report.md` §3–4. Summary:
+This block took three iterations; runs 1–2 are archived (`run1_trap`,
+`run2_trap`) and analysed in `docs/imbalance_report.md` §3–4. Summary:
 
 - **Run 1** — the default ±4-bin peak search returned the EM f1 line as "the 1×"
   wherever s·f1 shrank below the zone (low speed / low slip). Exponent bent to 0.96;

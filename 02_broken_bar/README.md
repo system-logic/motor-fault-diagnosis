@@ -28,19 +28,18 @@ naive one on real data.
 ├── README.md                    ← this file
 ├── scripts/
 │   ├── broken_bar_analyze.py    ← per-window analysis, tables, summary figures
-│   ├── broken_bar_visualize.py  ← per-file 6-panel diagnostic sheets
-│   └── health_baseline.py       ← shared module (copy of the one from 01_health)
-├── outputs/                     ← generated CSV/PNG go here (see "How to run")
-└── data/                        ← broken-bar CSVs (not in the repo — see repository root README)
+│   └── broken_bar_visualize.py  ← per-file 6-panel diagnostic sheets
+├── outputs/                     ← the scripts write here (CSV/PNG, committed)
+└── data/                        ← broken-bar CSVs go here (not in the repo — see "Data layout")
 ```
 
-> **Two dependencies to keep next to the scripts:**
-> 1. **`health_baseline.py`** — the shared module both scripts import
->    (`import health_baseline as hb`). Keep a copy in this folder.
-> 2. **`health_baseline_plateaus.csv`** — the healthy baseline table from `01_health`,
->    used by the *naive* indicator. `broken_bar_analyze.py` searches for it in the
->    script folder and nearby parent folders; you can also set its path explicitly
->    (see "Configuration"). If it is missing, the naive indicator is skipped and the
+> **Two dependencies, both resolved from the repository layout:**
+> 1. **`common/health_baseline.py`** — the shared module both scripts import
+>    (`import health_baseline as hb`); the path is computed from the script's location.
+> 2. **`01_health/outputs/health_baseline_plateaus.csv`** — the healthy baseline table,
+>    used by the *naive* indicator. `broken_bar_analyze.py` reads it from that location
+>    (fallback: a search under `data/` and nearby folders, or an explicit `HEALTH_CSV`,
+>    see "Configuration"). If it is missing, the naive indicator is skipped and the
 >    self-sufficient SNR indicator (the one we actually rely on) still works.
 
 ---
@@ -82,22 +81,18 @@ the load proxy**.
 
 The raw CSV files are large and are **not** stored in the repository. Obtain the
 dataset as described in the repository root `README`, then place the broken-bar class
-files so the scripts can find them (they search their own folder **recursively**):
+files under this section's **`data/`** folder (searched **recursively**, git-ignored):
 
 ```
-02_broken_bar/scripts/
-├── broken_bar_analyze.py
-├── broken_bar_visualize.py
-├── health_baseline.py
-├── health_baseline_plateaus.csv        ← copy from 01_health (for the naive indicator)
+02_broken_bar/data/
 ├── speed_circulation/
 │   └── broken_bar_H_speed_circulation_*Nm_*rpm_*.csv
 └── torque_circulation/
     └── broken_bar_H_torque_circulation_*Nm_*rpm_*.csv
 ```
 
-Files are matched by a regex on `…Nm…rpm…` in the name; the healthy baseline CSV is
-excluded automatically.
+Files are matched by a regex on `…Nm…rpm…` in the name. On Windows a directory
+junction avoids copying: `mklink /J 02_broken_bar\data "<dataset>\Broken_Bar"`.
 
 ---
 
@@ -114,7 +109,7 @@ pip install numpy pandas scipy matplotlib
 
 ## 5. How to run
 
-Run from the folder that contains the scripts and the data (paths are auto-located).
+Run from `02_broken_bar/scripts/` (paths are derived from the script's own location).
 
 ```bash
 # 1) Per-window analysis: tables + summary figures + console headline report
@@ -125,15 +120,14 @@ python broken_bar_visualize.py
 python broken_bar_visualize.py 40Nm      # only files whose name contains "40Nm"
 ```
 
-Generated files appear **next to the script**; move them into `outputs/` afterwards to
-keep the repo tidy.
+All generated files go to **`02_broken_bar/outputs/`**.
 
 ### Configuration (top of `broken_bar_analyze.py`)
 
 - `WIN_SEC` — analysis window length (default 8 s ⇒ frequency resolution ≈ 0.125 Hz).
   Shorter = more slip-stable but coarser resolution.
-- `HEALTH_CSV` — explicit path to `health_baseline_plateaus.csv`. Leave empty to
-  auto-search the script folder and nearby parent folders.
+- `HEALTH_CSV` — explicit path to `health_baseline_plateaus.csv`. Leave empty to use
+  `01_health/outputs/health_baseline_plateaus.csv` (then a search under `data/`).
 
 ---
 

@@ -327,9 +327,14 @@ def crossing_report(tab):
     if not any_found:
         print("  (no regimes covered by both protocols in this set)")
 
-def main():
+def main(root=None, out_dir=None):
+    """root: folder searched recursively for health_*Nm*rpm*.csv; out_dir: where the
+       table and the validation figure are written (defaults: argv[1] / cwd, and root)."""
     import sys
-    root = sys.argv[1] if len(sys.argv) > 1 else os.path.dirname(os.path.abspath(__file__))
+    if root is None:
+        root = sys.argv[1] if len(sys.argv) > 1 else os.getcwd()
+    out_dir = out_dir or root
+    os.makedirs(out_dir, exist_ok=True)
     print("Search root:", root)
     files = collect_health_files(root)
     if not files:
@@ -341,7 +346,7 @@ def main():
         rows, ch = process_file(f)
         all_rows += rows; chmaps.append((os.path.basename(f), ch))
     tab = pd.DataFrame(all_rows)
-    out = os.path.join(root, "health_baseline_plateaus.csv")
+    out = os.path.join(out_dir, "health_baseline_plateaus.csv")
     tab.to_csv(out, index=False)
 
     # --- sanity: channel-map consistency ---
@@ -365,7 +370,7 @@ def main():
     print("\n=== Baseline per plateau (key columns) ===")
     print(tab[show].to_string(index=False))
     crossing_report(tab)
-    make_plots(tab, root)
+    make_plots(tab, out_dir)
     print("\nSaved:", out)
     return tab
 

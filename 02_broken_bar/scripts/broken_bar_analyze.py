@@ -17,9 +17,10 @@ Indicators (both, as decided - deep analysis):
 
 Comb k=1,2,3: bands at f1*(1 +/- 2ks).
 
-Run: place next to health_baseline.py in the Broken_Bar folder. Point HEALTH_CSV at
-the health table (or let the script search parent folders for it).
-  python broken_bar_analyze.py            - all files in the script folder
+Run from this folder:  python broken_bar_analyze.py
+  data:    ../data/**/*.csv (broken-bar class files)
+  health:  ../../01_health/outputs/health_baseline_plateaus.csv (or HEALTH_CSV below)
+  output:  ../outputs/
 """
 import os, sys, glob, re
 import numpy as np
@@ -29,8 +30,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, SCRIPT_DIR)
+SECTION_DIR = os.path.dirname(SCRIPT_DIR)                 # e.g. 02_broken_bar/
+REPO_ROOT = os.path.dirname(SECTION_DIR)
+sys.path.insert(0, os.path.join(REPO_ROOT, "common"))     # the single shared module
 import health_baseline as hb
+DATA_DIR = os.path.join(SECTION_DIR, "data")              # raw CSVs (not in the repo)
+OUT_DIR = os.path.join(SECTION_DIR, "outputs")            # everything this script writes
+os.makedirs(OUT_DIR, exist_ok=True)
 FS = hb.FS
 
 # ---- segmentation / analysis parameters ----
@@ -47,9 +53,12 @@ def find_health_csv():
     if HEALTH_CSV and os.path.exists(HEALTH_CSV):
         return HEALTH_CSV
     name = "health_baseline_plateaus.csv"
-    # recursive - only inside the script folder (a class folder is small)
-    hits = glob.glob(os.path.join(SCRIPT_DIR, "**", name), recursive=True)
-    # sibling folders up to 2 levels up - NON-recursive (e.g. ../Health/, ../../Health/)
+    # 1) the table built by 01_health (canonical location in this repo)
+    canon = os.path.join(REPO_ROOT, "01_health", "outputs", name)
+    if os.path.exists(canon):
+        return canon
+    # 2) fallback: anywhere under this section's data folder, then nearby parents
+    hits = glob.glob(os.path.join(DATA_DIR, "**", name), recursive=True)
     d = SCRIPT_DIR
     for _ in range(3):
         d = os.path.dirname(d)
@@ -199,12 +208,12 @@ def load_health_floor(csv):
     return {k: float(np.mean(v)) for k, v in out.items()}
 
 def main():
-    files = sorted(glob.glob(os.path.join(SCRIPT_DIR, "**", "*.csv"), recursive=True))
+    files = sorted(glob.glob(os.path.join(DATA_DIR, "**", "*.csv"), recursive=True))
     files = [f for f in files if re.search(r"\d+Nm", os.path.basename(f))
              and re.search(r"\d+rpm", os.path.basename(f))
              and "baseline" not in os.path.basename(f)]
     if not files:
-        print("No broken-bar files found next to the script."); return
+        print("No broken-bar files found under " + DATA_DIR + "."); return
     hcsv = find_health_csv()
     health_floor = load_health_floor(hcsv)
     print(f"Files: {len(files)} | health floor: "
@@ -212,11 +221,11 @@ def main():
 
     all_rows = []
     for f in files:
-        print("...", os.path.relpath(f, SCRIPT_DIR))
+        print("...", os.path.relpath(f, DATA_DIR))
         rows, ch = process_file(f, health_floor)
         all_rows += rows
     tab = pd.DataFrame(all_rows)
-    out = os.path.join(SCRIPT_DIR, "broken_bar_windows.csv")
+    out = os.path.join(OUT_DIR, "broken_bar_windows.csv")
     tab.to_csv(out, index=False)
 
     # per-file headline = the max-load (max-slip) window among resolvable ones
@@ -226,7 +235,7 @@ def main():
         pick = (gr if len(gr) else g).sort_values("slip_pct").iloc[-1]
         head.append(pick)
     headtab = pd.DataFrame(head)
-    headtab.to_csv(os.path.join(SCRIPT_DIR, "broken_bar_headline.csv"), index=False)
+    headtab.to_csv(os.path.join(OUT_DIR, "broken_bar_headline.csv"), index=False)
 
     pd.set_option("display.width", 260, "display.max_columns", 60)
     show = ["file", "protocol", "load_nominal_Nm", "rpm", "slip_pct", "off_2s_Hz",
@@ -259,7 +268,7 @@ def make_figs(tab, headtab):
     else:
         ax[1].text(0.5, 0.5, "health floor not found\nnaive indicator skipped",
                    ha="center", va="center", transform=ax[1].transAxes)
-    plt.tight_layout(); plt.savefig(os.path.join(SCRIPT_DIR, "broken_bar_signature.png"), dpi=120); plt.close()
+    plt.tight_layout(); plt.savefig(os.path.join(OUT_DIR, "broken_bar_signature.png"), dpi=120); plt.close()
 
     # (3) signature track: measured band offset vs slip (comb follows slip)
     fig, ax = plt.subplots(figsize=(7.5, 5))
@@ -267,7 +276,7 @@ def make_figs(tab, headtab):
     ax.set(title="(3) Band offset 2s·f1 vs slip - linearity = broken-bar signature",
            xlabel="slip s, %", ylabel="measured offset 2s·f1, Hz")
     ax.grid(alpha=0.3)
-    plt.tight_layout(); plt.savefig(os.path.join(SCRIPT_DIR, "broken_bar_signature_track.png"), dpi=120); plt.close()
+    plt.tight_layout(); plt.savefig(os.path.join(OUT_DIR, "broken_bar_signature_track.png"), dpi=120); plt.close()
 
 if __name__ == "__main__":
     main()

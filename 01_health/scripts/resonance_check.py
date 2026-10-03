@@ -11,8 +11,8 @@ resonance_check.py — проверка гипотезы РЕЗОНАНСА ст
 24–41 Гц (в стороне от 50). Если на них в спектре c3 есть НЕПОДВИЖНЫЙ пик у ~50 Гц
 (отдельно от 1×), а на 3000 об/мин 1× в него въезжает и раздувается — это H1.
 
-Скрипт кладётся в папку Health и сам находит health-файлы (обе подпапки).
-Переиспользует опознание каналов из health_baseline.py (лежит рядом).
+Запуск из этой папки: python resonance_check.py
+  данные: ../data/**/health_*.csv;  модуль: ../../common/health_baseline.py;  выход: ../outputs/
 
 Выход:
   resonance_c3_spectra_overlay.png  — наложение спектров c3 с разных скоростей
@@ -28,8 +28,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, SCRIPT_DIR)
-import health_baseline as hb   # load_clean, classify, instantaneous_rpm, detect_plateaus, f1_of
+SECTION_DIR = os.path.dirname(SCRIPT_DIR)                 # e.g. 02_broken_bar/
+REPO_ROOT = os.path.dirname(SECTION_DIR)
+sys.path.insert(0, os.path.join(REPO_ROOT, "common"))     # the single shared module
+import health_baseline as hb
+DATA_DIR = os.path.join(SECTION_DIR, "data")              # raw CSVs (not in the repo)
+OUT_DIR = os.path.join(SECTION_DIR, "outputs")            # everything this script writes
+os.makedirs(OUT_DIR, exist_ok=True)
 FS = hb.FS
 
 RES_BAND = (40.0, 60.0)     # где ищем фиксированный пик резонанса, Гц
@@ -57,9 +62,9 @@ def peak_in_band(f, sp, lo, hi, exclude_fc=None, exclude_half=2.5):
 
 def collect_plateaus():
     """Все полки всех health-файлов -> список (rpm, fr, срез сигнала X, каналы)."""
-    files = hb.collect_health_files(SCRIPT_DIR)
+    files = hb.collect_health_files(DATA_DIR)
     if not files:
-        print("Health-файлы не найдены рядом со скриптом."); sys.exit(1)
+        print("Health-файлы не найдены в", DATA_DIR); sys.exit(1)
     out = []
     ref_vib = None
     for p in files:
@@ -157,7 +162,7 @@ def main():
            title="Наложение спектров вибрации c3 по скоростям\n"
                  "кружок = 1× каждой полки; ищем НЕПОДВИЖНЫЙ пик у 50 Гц")
     ax.legend(fontsize=7, ncol=2); ax.grid(True, which="both", alpha=0.3)
-    plt.tight_layout(); p1 = os.path.join(SCRIPT_DIR, "resonance_c3_spectra_overlay.png")
+    plt.tight_layout(); p1 = os.path.join(OUT_DIR, "resonance_c3_spectra_overlay.png")
     plt.savefig(p1, dpi=120); print("\nГрафик:", p1)
 
     # (2) транссмиссивность
@@ -175,7 +180,7 @@ def main():
     ax[1].set(xlabel="fr, Гц", ylabel="1×/fr² (норм.)",
               title="Механическая податливость 1×/fr² (пик = резонанс)")
     ax[1].grid(True, alpha=0.3)
-    plt.tight_layout(); p2 = os.path.join(SCRIPT_DIR, "resonance_transmissibility.png")
+    plt.tight_layout(); p2 = os.path.join(OUT_DIR, "resonance_transmissibility.png")
     plt.savefig(p2, dpi=120); print("График:", p2)
 
     # ---------- Вердикт ----------

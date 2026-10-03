@@ -105,14 +105,14 @@ centres match those predicted from slip (error a fraction of a Hz). Plotting ban
 against slip lines up cleanly — the bands ride exactly as slip dictates. This proves a
 genuine rotor signature, not random peaks.
 
-![Band offset 2s·f1 vs slip — the linear trend is the signature](https://github.com/system-logic/motor-fault-diagnosis/blob/main/docs/broken_bar_signature_track.png)
+![Band offset 2s·f1 vs slip — the linear trend is the signature](https://github.com/system-logic/motor-fault-diagnosis/blob/main/02_broken_bar/outputs/broken_bar_signature_track.png)
 
 **5.2. Naive fails, self-sufficient SNR does not.** The naive rise scatters by up to
 ~15 dB between protocols at the same regime — no single threshold fits it. The SNR of the
 same points stays tight. Diagnosis is built on **SNR**. (The naive indicator is also
 *unavailable* where the healthy floor was undefined — an extra argument for SNR.)
 
-![Signature vs slip (load axis), and naive rise vs self-sufficient SNR](https://github.com/system-logic/motor-fault-diagnosis/blob/main/docs/broken_bar_signature.png)
+![Signature vs slip (load axis), and naive rise vs self-sufficient SNR](https://github.com/system-logic/motor-fault-diagnosis/blob/main/02_broken_bar/outputs/broken_bar_signature.png)
 
 **5.3. Load is the strength axis.** Under heavy load (40 Nm) the band SNR is ~37–44 dB;
 under light load (20 Nm) ~15–26 dB (medians 37 vs 19 dB). Broken bars are caught most

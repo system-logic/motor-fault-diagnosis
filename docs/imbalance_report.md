@@ -4,7 +4,7 @@
 Class: `Rotor_Unbalance`, 12 files (2 protocols × 2 loads × 3 nominal speeds).
 Channel of evidence: **vibration** (radial axes c2/c3, axial c4); current is a cross-check.
 This episode took **three iterations** to get right. All intermediate outputs are preserved
-(`1_Trap results`, `2_Trap results`) — the mistakes and their corrections are part of the
+(`run1_trap`, `run2_trap`) — the mistakes and their corrections are part of the
 result, and this report walks through them in order.
 
 ---
@@ -68,7 +68,7 @@ of the whole episode.
 
 **Result of the first run: the law came out with exponent n = 0.96 instead of 2.** A
 factor-of-two error in the exponent is not a detail; it says the model of the signal is
-wrong. Outputs preserved in `1_Trap results`.
+wrong. Outputs preserved in `run1_trap`.
 
 The cause was a default that had been harmless in every previous episode: the amplitude
 reader searched for the peak in a **±4-bin window** around the target frequency. For
@@ -103,7 +103,7 @@ every window a *resolvability passport*: `sep_bins = |f1 − fr| / bin width`, a
 windows where the flat-top main lobe of the f1 line geometrically covers the 1x bin.
 
 The narrow search was right and stayed. The **bin-distance exclusion rule failed in both
-directions**, and the run-2 data (preserved in `2_Trap results`) show it cleanly:
+directions**, and the run-2 data (preserved in `run2_trap`) show it cleanly:
 
 - The 478 rpm / 40 Nm point (sep = 6.2 bins) **passed** the filter — and again bent the
   exponent to 0.99, sitting ×10 above the law.

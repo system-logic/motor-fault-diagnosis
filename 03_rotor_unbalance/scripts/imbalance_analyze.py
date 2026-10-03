@@ -21,7 +21,7 @@ Protocol handling (recon findings):
 The law: R1x ~ fr^2 (omega^2). The ~50 Hz rig resonance point is EXCLUDED from the fit
 (it inflates the radial 1x, rides the c3 mode) and kept as the max-sensitivity zone.
 
-THE 2-POLE TRAP (found on run 1; run-1 outputs preserved in "1_Trap results"):
+THE 2-POLE TRAP (found on run 1; run-1 outputs preserved in "run1_trap"):
 on a 2-pole machine the electromagnetic f1 line sits only s*f1 Hz above the mechanical
 1x (fr). The old wide +/-4-bin search around fr grabbed the f1 line whenever the two
 were not resolvable (low speed and/or low slip), inflating "R1x" x7-10 at ~490 rpm and
@@ -43,9 +43,10 @@ low-speed corner is blind for both methods, for different reasons). Hard exclusi
 separation now applies only to truly merged lines (sep < 3 bins). The EM f1 line is
 measured per window (vib_f1_line) to document the masker.
 
-Run: place next to health_baseline.py in the Rotor_Unbalance folder. Point HEALTH_CSV at
-the health table (or let the script search parent folders for it).
-  python imbalance_analyze.py            - all files in the script folder
+Run from this folder:  python imbalance_analyze.py
+  data:    ../data/**/*.csv (Rotor_Unbalance class files)
+  health:  ../../01_health/outputs/health_baseline_plateaus.csv (or HEALTH_CSV below)
+  output:  ../outputs/
 """
 import os, sys, glob, re
 import numpy as np
@@ -55,8 +56,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, SCRIPT_DIR)
+SECTION_DIR = os.path.dirname(SCRIPT_DIR)                 # e.g. 02_broken_bar/
+REPO_ROOT = os.path.dirname(SECTION_DIR)
+sys.path.insert(0, os.path.join(REPO_ROOT, "common"))     # the single shared module
 import health_baseline as hb
+DATA_DIR = os.path.join(SECTION_DIR, "data")              # raw CSVs (not in the repo)
+OUT_DIR = os.path.join(SECTION_DIR, "outputs")            # everything this script writes
+os.makedirs(OUT_DIR, exist_ok=True)
 FS = hb.FS
 
 # ---- analysis parameters ----
@@ -80,7 +86,10 @@ def find_health_csv():
     if HEALTH_CSV and os.path.exists(HEALTH_CSV):
         return HEALTH_CSV
     name = "health_baseline_plateaus.csv"
-    hits = glob.glob(os.path.join(SCRIPT_DIR, "**", name), recursive=True)
+    canon = os.path.join(REPO_ROOT, "01_health", "outputs", name)
+    if os.path.exists(canon):
+        return canon
+    hits = glob.glob(os.path.join(DATA_DIR, "**", name), recursive=True)
     d = SCRIPT_DIR
     for _ in range(3):
         d = os.path.dirname(d)
@@ -249,12 +258,12 @@ def omega_fit(tab):
     return float(n), float(b), use
 
 def main():
-    files = sorted(glob.glob(os.path.join(SCRIPT_DIR, "**", "*.csv"), recursive=True))
+    files = sorted(glob.glob(os.path.join(DATA_DIR, "**", "*.csv"), recursive=True))
     files = [f for f in files if re.search(r"\d+Nm", os.path.basename(f))
              and re.search(r"\d+rpm", os.path.basename(f))
              and "baseline" not in os.path.basename(f)]
     if not files:
-        print("No Rotor_Unbalance files found next to the script."); return
+        print("No Rotor_Unbalance files found under " + DATA_DIR + "."); return
     hcsv = find_health_csv()
     health_r1x = load_health_r1x(hcsv)
     print(f"Files: {len(files)} | health table: "
@@ -267,10 +276,10 @@ def main():
     for f in files:
         rows, ch, prep = process_file(f, health_r1x)
         all_rows += rows; chmaps.append((os.path.basename(f), ch))
-        print(f"  {os.path.relpath(f, SCRIPT_DIR)}")
+        print(f"  {os.path.relpath(f, DATA_DIR)}")
         print(f"     plateaus: " + ", ".join(f"{r:.0f}rpm[{a}-{b}s]" for a, b, r in prep))
     tab = pd.DataFrame(all_rows)
-    out = os.path.join(SCRIPT_DIR, "imbalance_windows.csv")
+    out = os.path.join(OUT_DIR, "imbalance_windows.csv")
     tab.to_csv(out, index=False)
 
     # channel-map consistency
@@ -285,7 +294,7 @@ def main():
         clean = g[(~g.on_resonance) & (~g.f1_in_1x) & (~g.low_speed_em)]
         head.append((clean if len(clean) else g).sort_values("R1x").iloc[-1])
     headtab = pd.DataFrame(head)
-    headtab.to_csv(os.path.join(SCRIPT_DIR, "imbalance_headline.csv"), index=False)
+    headtab.to_csv(os.path.join(OUT_DIR, "imbalance_headline.csv"), index=False)
 
     pd.set_option("display.width", 260, "display.max_columns", 60)
     show = ["file", "protocol", "load_nominal_Nm", "rpm", "fr_Hz", "slip_pct",
@@ -364,7 +373,7 @@ def make_figs(tab, headtab, n, b):
     ax.set(title="(law) Radial 1x magnitude vs rotation freq",
            xlabel="fr = rpm/60, Hz", ylabel="R1x = sqrt(c2^2+c3^2)")
     ax.legend(fontsize=8); ax.grid(alpha=0.3, which="both")
-    plt.tight_layout(); plt.savefig(os.path.join(SCRIPT_DIR, "imbalance_omega2.png"), dpi=120); plt.close()
+    plt.tight_layout(); plt.savefig(os.path.join(OUT_DIR, "imbalance_omega2.png"), dpi=120); plt.close()
 
     # (2) load-independence: R1x vs slip in torque (flat lines)
     fig, ax = plt.subplots(figsize=(7.5, 5))
@@ -376,7 +385,7 @@ def make_figs(tab, headtab, n, b):
     ax.set(title="(control) TORQUE: R1x vs slip = load axis -> FLAT = rotor, not load",
            xlabel="slip s, % (load proxy)", ylabel="R1x")
     ax.legend(fontsize=8); ax.grid(alpha=0.3)
-    plt.tight_layout(); plt.savefig(os.path.join(SCRIPT_DIR, "imbalance_load_independence.png"), dpi=120); plt.close()
+    plt.tight_layout(); plt.savefig(os.path.join(OUT_DIR, "imbalance_load_independence.png"), dpi=120); plt.close()
 
     # (3) radial vs axial 1x vs fr (axial must stay low for imbalance)
     fig, ax = plt.subplots(figsize=(7.5, 5))
@@ -385,7 +394,7 @@ def make_figs(tab, headtab, n, b):
     ax.set(title="(control) Radial vs axial 1x (axial low = pure imbalance)",
            xlabel="fr, Hz", ylabel="1x amplitude")
     ax.legend(fontsize=8); ax.grid(alpha=0.3, which="both")
-    plt.tight_layout(); plt.savefig(os.path.join(SCRIPT_DIR, "imbalance_radial_vs_axial.png"), dpi=120); plt.close()
+    plt.tight_layout(); plt.savefig(os.path.join(OUT_DIR, "imbalance_radial_vs_axial.png"), dpi=120); plt.close()
 
 if __name__ == "__main__":
     main()

@@ -67,7 +67,7 @@ Investigations: imbalance (pure) · the ω² law · load-independence control ·
   healthy-spread task below).
 - Closes: (2) the ω² law with correct resonance handling; imbalance vs healthy.
 - **Found here (took three runs; runs 1–2 preserved in the section's
-  `outputs/1_Trap results` and `2_Trap results`; full story in
+  `outputs/run1_trap` and `run2_trap`; full story in
   `docs/imbalance_report.md`):**
   · **the 2-pole trap** — on a 2-pole machine the EM f1 line sits only s·f1 from the
     mechanical 1×; a wide ±4-bin peak search returned the EM line as "the 1×" and bent

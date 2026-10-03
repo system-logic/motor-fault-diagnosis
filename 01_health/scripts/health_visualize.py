@@ -23,8 +23,13 @@ from matplotlib.patches import Patch
 from scipy.signal import spectrogram
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, SCRIPT_DIR)
+SECTION_DIR = os.path.dirname(SCRIPT_DIR)                 # e.g. 02_broken_bar/
+REPO_ROOT = os.path.dirname(SECTION_DIR)
+sys.path.insert(0, os.path.join(REPO_ROOT, "common"))     # the single shared module
 import health_baseline as hb
+DATA_DIR = os.path.join(SECTION_DIR, "data")              # raw CSVs (not in the repo)
+OUT_DIR = os.path.join(SECTION_DIR, "outputs")            # everything this script writes
+os.makedirs(OUT_DIR, exist_ok=True)
 FS = hb.FS
 RESONANCE_HZ = 50.0
 
@@ -167,14 +172,14 @@ def draw_sheet(path):
     fig.suptitle(f"{fname}  |  {proto}  |  longest plateau {rp:.0f} rpm, "
                  f"f1={f1:.2f} Hz, s={slip*100:.2f}%, 2s·f1={off:.2f} Hz",
                  fontsize=12, fontweight="bold", y=0.995)
-    out = os.path.join(SCRIPT_DIR, "viz_" + os.path.splitext(fname)[0] + ".png")
+    out = os.path.join(OUT_DIR, "viz_" + os.path.splitext(fname)[0] + ".png")
     plt.savefig(out, dpi=110, bbox_inches="tight")
     plt.close()
     return out
 
 def main():
     mask = sys.argv[1] if len(sys.argv) > 1 else None
-    files = hb.collect_health_files(SCRIPT_DIR)
+    files = hb.collect_health_files(DATA_DIR)
     if mask:
         files = [f for f in files if mask in os.path.basename(f)]
     if not files:
@@ -185,7 +190,7 @@ def main():
         out = draw_sheet(f)
         if out:
             print("    ->", os.path.basename(out))
-    print("Done. Sheets viz_*.png are next to the script.")
+    print("Done. Sheets viz_*.png are in", OUT_DIR)
 
 if __name__ == "__main__":
     main()

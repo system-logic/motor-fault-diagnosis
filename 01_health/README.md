@@ -26,16 +26,17 @@ test rig near 50 Hz**, a finding that shapes how vibration is interpreted later.
 01_health/
 ├── README.md                 ← this file
 ├── scripts/
-│   ├── health_baseline.py    ← core module + baseline builder (imported by the others)
+│   ├── build_baseline.py     ← builds the baseline table (runner around common/health_baseline.py)
 │   ├── health_visualize.py   ← per-file 6-panel diagnostic sheets
 │   └── resonance_check.py    ← rig resonance hypothesis test
-├── outputs/                  ← generated CSV/PNG go here (see "How to run")
-└── data/                     ← health CSVs (not in the repo — see repository root README)
+├── outputs/                  ← the scripts write here (CSV/PNG, committed)
+└── data/                     ← health CSVs go here (not in the repo — see "Data layout")
 ```
 
-> **Dependency note.** `health_baseline.py` is not only a runnable script — it is the
-> shared **module** that the other two import (`import health_baseline as hb`).
-> It must sit **next to** `health_visualize.py` and `resonance_check.py` when they run.
+> **Shared module.** All analysis code lives in **`common/health_baseline.py`** at the
+> repository root — channel identification, plateaus, f1/slip, spectra, the baseline
+> builder. Every script in every section imports it (`import health_baseline as hb`)
+> through a path computed from its own location, so nothing has to be copied.
 
 ---
 
@@ -68,19 +69,19 @@ name**; where a load axis is needed, **slip** is used as a load proxy.
 
 The raw CSV files are large (~100 MB each) and are **not** stored in the repository.
 Obtain the dataset as described in the repository root `README`, then place the
-healthy-class CSVs so the scripts can find them (they search their own folder
-**recursively**). Recommended layout for a run:
+healthy-class CSVs under this section's **`data/`** folder (searched **recursively**;
+the folder is git-ignored). Any sub-structure works; the dataset's own is fine:
 
 ```
-01_health/scripts/
-├── health_baseline.py
-├── health_visualize.py
-├── resonance_check.py
+01_health/data/
 ├── speed_circulation/
 │   └── health_speed_circulation_*Nm_*rpm_*.csv
 └── torque_circulation/
     └── health_torque_circulation_*Nm_*rpm_*.csv
 ```
+
+On Windows a directory junction to the unpacked dataset avoids copying:
+`mklink /J 01_health\data "<dataset>\Health"`.
 
 Files are matched by a regex on `…Nm…rpm…` in the name (this tolerates typos in the
 word *circulation*), and must start with `health`.
@@ -100,12 +101,13 @@ pip install numpy pandas scipy matplotlib
 
 ## 5. How to run
 
-Run each script **from the folder that contains it and the data** (the scripts
-auto-locate their own directory; no paths to edit).
+Run each script from `01_health/scripts/` (paths are derived from the script's own
+location; nothing to edit):
 
 ```bash
 # 1) Build the baseline table + validation figure + console sanity report
-python health_baseline.py
+python build_baseline.py
+python build_baseline.py <folder>      # or point it at any folder of health CSVs
 
 # 2) Per-file diagnostic sheets (all files, or filter by a name substring)
 python health_visualize.py
@@ -115,14 +117,15 @@ python health_visualize.py 3000        # only files whose name contains "3000"
 python resonance_check.py
 ```
 
-Generated files appear **next to the script**. Move them into `outputs/` afterwards
-to keep the repo tidy (the scripts do not write into `outputs/` automatically).
+All generated files go to **`01_health/outputs/`**. The table
+`outputs/health_baseline_plateaus.csv` is the healthy reference that sections 02 and 03
+read from this location.
 
 ---
 
 ## 6. Outputs, explained
 
-### `health_baseline.py`
+### `build_baseline.py` (→ `common/health_baseline.py`)
 - **`health_baseline_plateaus.csv`** — one row per plateau (operating point). Columns
   include: `protocol`, `load_nominal_Nm`, `rpm_meas`, `f1_Hz`, `slip_pct`,
   `sb_offset_Hz` (= 2·s·f1), `sb_floor_bb_dB` (broken-bar sideband floor),
@@ -188,9 +191,10 @@ These results are relied upon by every later section:
 
 ## 9. Troubleshooting
 
-- *"No health files found"* — the CSVs are not under the script's folder, or their
+- *"No health files found"* — the CSVs are not under `01_health/data/`, or their
   names don't contain `…Nm…rpm…`, or they don't start with `health`.
-- *Import error for `health_baseline`* — make sure `health_baseline.py` is in the same
-  folder as the script you are running.
+- *Import error for `health_baseline`* — the script computes the path to
+  `common/health_baseline.py` from its own location; keep the repository layout
+  (section folder → `scripts/`) intact.
 - *Fewer files than expected* — the console prints the count and the paths it found;
   check that both `speed_circulation/` and `torque_circulation/` are present.
