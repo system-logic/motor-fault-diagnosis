@@ -1,6 +1,6 @@
 # Rotor unbalance — vibration 1x analysis, the 2-pole trap, and two low-speed limits
 
-**Episode 3 of the ZZU-MCC5 (MCC5-THU) diagnostics series.**
+**Episode 3 of the ZZU-MCC5 diagnostics series.**
 Class: `Rotor_Unbalance`, 12 files (2 protocols × 2 loads × 3 nominal speeds).
 Channel of evidence: **vibration** (radial axes c2/c3, axial c4); current is a cross-check.
 This episode took **three iterations** to get right. All intermediate outputs are preserved

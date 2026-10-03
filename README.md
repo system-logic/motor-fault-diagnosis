@@ -35,9 +35,15 @@ justified, negative controls are run, and dead ends are documented instead of hi
 
 ## The data
 
-**Dataset:** *Multi-mode Fault Diagnosis Datasets of Three-phase Asynchronous Motor Under
-Variable Working Conditions* (MCC5-THU), MCC5 Group Shanghai & Tsinghua University.
-Public, on Mendeley Data: [doi:10.17632/6s3dggj9mw.1](https://data.mendeley.com/datasets/6s3dggj9mw/1).
+**Dataset:** *ZZU-MCC5 motor fault diagnosis datasets* (Zhou, Zou, Li, Liu, Chen, Gao),
+Mendeley Data, 2025 — [doi:10.17632/r3yycxfyjf.1](https://doi.org/10.17632/r3yycxfyjf.1).
+This is the release the analysis was run on; the class folders are named as in it.
+
+**Description of the data:** Chen, Liu, Li, Zou, He, Zhou, *Multi-mode fault diagnosis
+datasets of three-phase asynchronous motor under variable working conditions*, Data in
+Brief, 2026 — [doi:10.1016/j.dib.2026.112583](https://doi.org/10.1016/j.dib.2026.112583)
+(open access, with the rig, sensors and protocols described in detail; its companion
+Mendeley record is [doi:10.17632/6s3dggj9mw.1](https://doi.org/10.17632/6s3dggj9mw.1)).
 
 - **Machine:** three-phase squirrel-cage induction motor, 2.2 kW, 2-pole, VFD-driven
 - **Sampling:** 12 800 Hz, 90 s per record (1 152 000 samples/channel)
